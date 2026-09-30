@@ -141,7 +141,7 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
   }, [userAccount]);
 
   // Custom provider-specific API Key States
-  const [showApiKeySettings, setShowApiKeySettings] = useState(true);
+  const [showApiKeySettings, setShowApiKeySettings] = useState(false);
   const [apiKeys, setApiKeys] = useState<{
     gemini: string;
     groq: string;
@@ -1020,327 +1020,7 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
         </div>
       </div>
 
-      {/* AI KEY & DEVELOPER STORY HUB */}
-      <div className="mb-10 max-w-6xl w-full mx-auto">
-        <div className="bg-slate-50 rounded-2xl border-2 border-slate-200/80 overflow-hidden shadow-sm flex flex-col">
-          
-          {/* HEADER CO-PILOT WITH EMBEDDED TOGGLE CARD */}
-          <div className="bg-linear-to-r from-slate-800 to-indigo-950 p-5 md:p-6 text-white text-left relative overflow-hidden select-none">
-            {/* Subtle floating background patterns */}
-            <div className="absolute top-0 right-1/4 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
-            
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-              <div className="space-y-1.5 flex-1 select-text">
-                <span className="inline-block text-[10px] font-black tracking-widest text-indigo-300 uppercase bg-indigo-950/60 px-2.5 py-1 rounded border border-indigo-800">
-                  🎓 PERSISTENT SECURE FUEL BOARD
-                </span>
-                <h2 className="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
-                  <span>🚀</span>
-                  <span>Developer's Desk & Dedicated API Fuel Hub</span>
-                </h2>
-                <p className="text-xs text-indigo-200 font-medium">
-                  A middle-class student's answer to expensive test series. Bring your own free key to enjoy unlimited fast PDF mock parsing!
-                </p>
-              </div>
-              
-              <button
-                type="button"
-                onClick={() => setShowApiKeySettings(!showApiKeySettings)}
-                className="shrink-0 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-bold rounded-lg text-white transition flex items-center gap-1 cursor-pointer self-start sm:self-center"
-              >
-                <Settings size={13} className="animate-pulse" />
-                <span>{showApiKeySettings ? "Collapse Panel ▲" : "Expand Settings ▼"}</span>
-              </button>
-            </div>
-          </div>
 
-          {showApiKeySettings && (
-            <div className="p-5 md:p-6 bg-white text-left text-xs select-text space-y-6">
-              
-              {/* SECTION 1: THE DEVELOPER'S STORY (JEE 94-PERCENTILER'S MISSION) */}
-              <div className="bg-[#f8fafc] border border-slate-200/60 p-4 rounded-xl flex flex-col md:flex-row gap-4 items-start relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl pointer-events-none" />
-                <div className="absolute bottom-0 right-10 w-16 h-16 bg-blue-500/5 rounded-full blur-xl pointer-events-none" />
-                
-                {/* Developer Persona Badge */}
-                <div className="shrink-0 bg-linear-to-br from-amber-50 to-orange-100 border border-amber-200 w-12 h-12 rounded-xl flex flex-col items-center justify-center shadow-xs select-none">
-                  <span className="text-sm font-black text-amber-600">JEE</span>
-                  <span className="text-[10px] font-extrabold text-amber-700 leading-none">94%ile</span>
-                </div>
-                
-                <div className="flex-1 space-y-2">
-                  <h3 className="font-extrabold text-slate-800 text-[13px] flex items-center gap-1.5 select-none">
-                    <span>👑</span>
-                    <span>The 94th Percentile Mission (From Your Developer's Desk)</span>
-                  </h3>
-                  <div className="text-slate-600 space-y-2 text-[11.5px] leading-relaxed">
-                    <p>
-                      Hey there, fellow aspirants! I am the creator of this platform. Like you, I put my blood, sweat, and tears into preparing for <strong>JEE Mains</strong> and secured a <strong>94 percentile</strong>. During my exam grind, I noticed a huge gap: there is literally a goldmine of <strong>completely free, abandoned Mock Test PDFs</strong> lying on Telegram channels and forums, but doing mock tests on a flat paper PDF is incredibly static. What we truly need is an authentic screen-based simulator experience, step-by-step solutions with real calculations, and comprehensive diagnostics. But premium CBT test series charge thousands of rupees, which is out of reach for many.
-                    </p>
-                    <p>
-                      This simulator is my solution to that. It instantly parses <strong>any free or abandoned PDF</strong>, reads complicated diagrams/chemistry nomenclature, formats mathematical expressions using beautiful <strong>LaTeX</strong>, and launches an absolutely precise NTA-style CBT test panel with fully detailed explanations and analysis metrics on-the-fly!
-                    </p>
-                    <p>
-                      <strong>The Rate Limit & Budget Bottleneck:</strong> Because I am from a modest, middle-class family, I cannot afford a paid premium API key that bills me for every usage. The embedded key I have supplied is on Google's <strong>Free Tier</strong>. This free key is shared globally and is restricted by Google to handle a maximum of 2-3 requests per minute. If more than 5 to 10 students use it at the same time, it bottlenecks, rate-limits, or crashes. To ensure a 100% dedicated, independent, and blazing fast experience, I highly urge you to grab your own free key!
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 2: ARCHITECTURE & PRIVACY GUARANTEE */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl space-y-2">
-                  <h4 className="font-extrabold text-indigo-950 text-xs flex items-center gap-1.5 select-none">
-                    <span>🛡️</span>
-                    <span>Secure Cloud & Firestore Persistent Sync</span>
-                  </h4>
-                  <p className="text-slate-600 text-[11px] leading-relaxed">
-                    This platform values your privacy and data security. <strong>Your custom API credentials, parser wallet balances, transactions, and profile records are synced securely with our Firebase Firestore cloud database</strong>. High-fidelity persistent state management lets you access your study stats safely across any browser device!
-                  </p>
-                </div>
-                <div className="p-4 bg-amber-50/70 border border-amber-200/60 rounded-xl space-y-2">
-                  <h4 className="font-extrabold text-amber-800 text-xs flex items-center gap-1.5 select-none">
-                    <span>⚠️</span>
-                    <span>Safety Warning & anti-Leak Disclaimer</span>
-                  </h4>
-                  <p className="text-slate-600 text-[11px] leading-relaxed">
-                    Your API keys are stored 100% locally inside your browser cache. However, <strong>please note that the developer is not responsible if, due to your own oversight or mistakes</strong> (such as taking screen recordings showing your keys, leaving your session open on public computers in libraries or cyber-cafes, or sharing browser cache exports), your API key gets leaked. Guard your key like a password!
-                  </p>
-                </div>
-              </div>
-
-              {/* SECTION 3: WHAT IS AN API KEY? */}
-              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50 space-y-2">
-                <h4 className="font-extrabold text-slate-800 text-xs flex items-center gap-1 select-none">
-                  <span>💡</span>
-                  <span>Knowledge Corner: What is an API Key?</span>
-                </h4>
-                <p className="text-slate-600 text-[11px] leading-relaxed">
-                  An <strong>API (Application Programming Interface) Key</strong> is a secret code that acts like a private secure keycard. It tells Google or other AI servers that you are a authorized caller, allowing your browser to send PDF pages directly to the AI model-brain to receive LaTeX translations. By putting your own key, Google assigns you a **100% isolated, dedicated free-tier quota** with zero central bottlenecks!
-                </p>
-              </div>
-
-              {/* BRAND NEW: PROS COMPARISON DESK - Bring direct structural comparison */}
-              <div className="border border-indigo-100 rounded-xl overflow-hidden shadow-2xs">
-                <div className="bg-linear-to-r from-indigo-50 to-blue-50/70 p-3.5 border-b border-indigo-100 select-none">
-                  <h4 className="font-extrabold text-indigo-950 text-xs flex items-center gap-1.5">
-                    <span>🌟</span>
-                    <span>PROS COMPARE: Dedicated Custom API Key vs. Shared Global Key</span>
-                  </h4>
-                </div>
-                <div className="p-4 bg-white grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Shared Global Option */}
-                  <div className="p-3 bg-red-50/45 rounded-lg border border-red-100/75 space-y-2 flex flex-col justify-between">
-                    <div>
-                      <span className="inline-block text-[9px] font-black tracking-wider text-red-700 bg-red-100 px-2 py-0.5 rounded-full select-none mb-1">
-                        🚦 SHARED SYSTEM KEY
-                      </span>
-                      <ul className="text-[11px] text-slate-600 space-y-1.5 list-disc list-inside">
-                        <li><strong>Slow Traffic:</strong> Shares 1 free channel globally with hundreds of concurrent users.</li>
-                        <li><strong>Rate-Limit Choke (429):</strong> Prone to failing when 5+ users process files simultaneously.</li>
-                        <li><strong>25 Question Cap:</strong> High congestion limits maximum subject-parsing speeds.</li>
-                        <li><strong>Unpredictable Latency:</strong> Queues can spin anywhere between 35s to over 2 minutes.</li>
-                      </ul>
-                    </div>
-                  </div>
-                  
-                  {/* Bring Your Own Key */}
-                  <div className="p-3 bg-emerald-50/50 rounded-lg border border-emerald-100/80 space-y-2 flex flex-col justify-between">
-                    <div>
-                      <span className="inline-block text-[9px] font-black tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full select-none mb-1">
-                        🚀 DEDICATED CUSTOM KEY
-                      </span>
-                      <ul className="text-[11px] text-slate-700 space-y-1.5 list-disc list-inside">
-                        <li><strong>Isolated Multi-Lane:</strong> Unleashes up to 12-track parallel requests for near-instant loads.</li>
-                        <li><strong>Safe From Collisions:</strong> Enjoy private 15 Requests/Min limits from Google AI Studio.</li>
-                        <li><strong>99.9% Success Rate:</strong> Solves throttling locks for flawless mock translations.</li>
-                        <li><strong>100% Free Forever:</strong> Zero charges under Google's personal study plans.</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 4: OPTIONS & GUIDE FOR DIFFERENT AIs */}
-              <div className="space-y-3.5 pt-2">
-                <label className="block text-xs font-extrabold text-slate-800 select-none">
-                  🔍 Choose AI Provider & Set Key:
-                </label>
-                
-                {/* Tabs */}
-                <div className="flex flex-wrap gap-1.5 border-b border-slate-100 pb-2 select-none">
-                  {[
-                    { id: "gemini", label: "Google Gemini (Free & Recommended) ✨", activeColor: "bg-blue-600 text-white border-blue-600" },
-                    { id: "groq", label: "Groq / DeepSeek (Fastest Generation) ⚡", activeColor: "bg-indigo-600 text-white border-indigo-600" }
-                  ].map((tab) => {
-                    const isActive = activeInstructionTab === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setActiveInstructionTab(tab.id as any)}
-                        className={`px-3 py-1.5 text-[11px] font-bold rounded-lg border cursor-pointer transition-all duration-200 ${
-                          isActive 
-                            ? tab.activeColor 
-                            : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200 shadow-2xs"
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Tab content */}
-                <div className="bg-[#fefaf6]/50 p-4 rounded-xl border border-orange-100/60 mt-2 text-[11.5px] leading-relaxed text-slate-600">
-                  
-                  {activeInstructionTab === "gemini" ? (
-                    <div className="space-y-2">
-                      <div className="font-extrabold text-slate-800 flex items-center gap-1.5 text-xs uppercase tracking-tight">
-                        <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                        <span>Google Gemini API Key (100% Free - Highly Recommended)</span>
-                      </div>
-                      <p>
-                        Google AI Studio grants students an incredibly generous, **permanently free API quota** (up to 15 Requests Per Minute)! It processes full PDF documents with robust LaTeX equations at ₹0 cost.
-                      </p>
-                      <div className="bg-white/80 rounded-lg p-3 border border-slate-200/50 space-y-1.5 text-slate-700">
-                        <p className="font-black text-[11px] uppercase tracking-wider text-slate-500">Step-by-Step setup:</p>
-                        <ol className="list-decimal list-inside space-y-1.5 text-xs font-medium">
-                          <li>
-                            Open <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-extrabold hover:underline">Google AI Studio (aistudio.google.com)</a> in a new tab and sign in using your standard Gmail.
-                          </li>
-                          <li>
-                            Click the blue **"Get API key"** button on the side panel or navigation header.
-                          </li>
-                          <li>
-                            Select **"Create API Key"** and choose to generate it in a new or default project.
-                          </li>
-                          <li>
-                            Copy your secret key string (starting with <code className="font-mono bg-slate-100 px-1 py-[1.5px] text-slate-800 select-all rounded font-bold">AIzaSy...</code> or the new <code className="font-mono bg-slate-100 px-1 py-[1.5px] text-slate-800 select-all rounded font-bold">AQ...</code> format).
-                          </li>
-                          <li>
-                            Paste this key into the field below and click **"Save Settings"**!
-                          </li>
-                        </ol>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="font-extrabold text-slate-800 flex items-center gap-1.5 text-xs uppercase tracking-tight">
-                        <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-                        <span>Groq API Integration Details</span>
-                      </div>
-                      <p>
-                        Groq is widely known for ultra-high-speed processing of open weights like Llama and Mixtral. It generates exceptionally calibrated, curriculum-realistic questions from your syllabus perfectly!
-                      </p>
-                      <div className="bg-white/80 rounded-lg p-3 border border-slate-200/50 space-y-1.5 text-slate-700">
-                        <p className="font-black text-[11px] uppercase tracking-wider text-slate-500">Step-by-Step setup:</p>
-                        <ol className="list-decimal list-inside space-y-1.5 text-xs font-medium">
-                          <li>Go to the <a href="https://console.groq.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-extrabold hover:underline">Groq Console (console.groq.com)</a>.</li>
-                          <li>Navigate to the API Keys sidebar and generate your key (prefix <code className="bg-slate-100 font-mono px-1">gsk_...</code>).</li>
-                          <li>Paste this key into the field below and click **"Save Settings"**!</li>
-                        </ol>
-                      </div>
-                    </div>
-                  )}
-
-                </div>
-              </div>
-
-              {/* SECTION 5: INPUT FORM & AVATAR CONFIG */}
-              <div className="space-y-4 pt-4 border-t border-slate-200">
-                <div className="space-y-1.5 text-left">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-extrabold text-slate-800 flex items-center gap-1">
-                      <span>🗝️</span> {
-                        activeInstructionTab === "gemini" ? "Enter Your Actionable Gemini API Key(s):" :
-                        "Enter Your Actionable Groq API Key(s):"
-                      }
-                    </label>
-                    {((activeInstructionTab === "gemini" && serverConfig.geminiConfigured) ||
-                      (activeInstructionTab === "groq" && serverConfig.groqConfigured)) && (
-                      <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-emerald-200/50 animate-pulse animate-duration-1000">
-                        ⚡ Shared Key Active
-                      </span>
-                    )}
-                  </div>
-                  {activeInstructionTab === "gemini" && (
-                    <p className="text-[11px] text-blue-600 font-medium leading-normal mb-1">
-                      💡 <strong>Rate-Limit Safe:</strong> Paste multiple keys separated by commas or lines to cycle through keys simultaneously!
-                    </p>
-                  )}
-                  <div className="relative">
-                    <input
-                      type={isKeyVisible ? "text" : "password"}
-                      value={apiKeys[activeInstructionTab] || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setApiKeys(prev => ({
-                          ...prev,
-                          [activeInstructionTab]: val
-                        }));
-                      }}
-                      placeholder={
-                        activeInstructionTab === "gemini" ? "APIKey1, APIKey2, APIKey3... (Paste multiple keys to cycle)" :
-                        "gsk_... (Enter your Groq API key)"
-                      }
-                      className="w-full px-3 py-2.5 pr-10 border-2 border-slate-200 rounded-lg font-mono text-xs focus:border-indigo-500 focus:outline-hidden text-slate-850 bg-white shadow-xs focus:ring-1 focus:ring-indigo-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setIsKeyVisible(!isKeyVisible)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"
-                    >
-                      {isKeyVisible ? <EyeOff size={15} /> : <Eye size={15} />}
-                    </button>
-                  </div>
-                </div>
-
-
-
-                {/* Save and Reset Commands */}
-                <div className="flex gap-2 justify-end pt-3 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={handleSaveApiKey}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-lg transition-all flex items-center gap-1.5 shadow-md shadow-indigo-200 cursor-pointer hover:scale-[1.01]"
-                  >
-                    {saveStatus === "saved" ? (
-                      <>
-                        <Check size={13} strokeWidth={3} />
-                        <span>All Changes Saved!</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle size={13} />
-                        <span>Save Settings</span>
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleClearApiKey}
-                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-lg transition cursor-pointer"
-                  >
-                    Reset Defaults
-                  </button>
-                </div>
-
-                {saveStatus === "saved" && (
-                  <p className="text-[10.5px] text-emerald-600 font-bold flex items-center gap-1.5 py-2 bg-emerald-50 border border-emerald-100 px-3 rounded-lg text-left shadow-2xs">
-                    ✓ Configuration saved successfully! Your dedicated API Key will now handle all upcoming mock translations with massive speed, completely separate from global limits.
-                  </p>
-                )}
-                {saveStatus === "cleared" && (
-                  <p className="text-[10.5px] text-indigo-700 font-bold flex items-center gap-1.5 py-2 bg-indigo-50 border border-indigo-100 px-3 rounded-lg text-left shadow-2xs">
-                    ✓ Custom configurations cleared. Offline PDF compilation expects you to present your own dedicated Gemini key.
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
 
       {errorMsg && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-start gap-2.5 shadow-sm animate-shake">
@@ -1787,6 +1467,146 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
         </div>
       </div>
 
+      {/* ADVANCED ACCELERATION & CUSTOM MODEL KEYS (Clean Bottom Placement) */}
+      <div className="mt-8 border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-2xs">
+        <button
+          type="button"
+          onClick={() => setShowApiKeySettings(!showApiKeySettings)}
+          className="w-full px-5 py-3.5 bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-left transition cursor-pointer select-none"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+              <Cpu size={15} />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-slate-800 block">
+                Advanced: Private Model Key & Engine Acceleration
+              </span>
+              <span className="text-[11px] text-slate-500 font-medium">
+                {apiKeys.gemini || apiKeys.groq 
+                  ? "✓ Dedicated private key active (Unlocks 12-track zero-queue parsing)"
+                  : "Connect your free Google Gemini or Groq key for unlimited 12-track parallel extraction"}
+              </span>
+            </div>
+          </div>
+          <span className="text-xs font-bold text-blue-600 flex items-center gap-1 font-mono">
+            {showApiKeySettings ? "Hide Settings ▲" : "Configure Key ▼"}
+          </span>
+        </button>
+
+        {showApiKeySettings && (
+          <div className="p-5 border-t border-slate-200 space-y-5 text-left text-xs bg-white">
+            <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-blue-50/60 border border-blue-100 p-3.5 rounded-xl">
+              <div>
+                <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider block font-mono">
+                  Why Add Your Own Key?
+                </span>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Get private 15 RPM quota directly from Google AI Studio. Avoid shared server bottlenecks and enable instant 12-track parallel parsing.
+                </p>
+              </div>
+              <a
+                href="https://aistudio.google.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="shrink-0 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] rounded-lg transition inline-flex items-center gap-1"
+              >
+                <span>Get Free Gemini Key</span>
+                <ArrowRight size={11} />
+              </a>
+            </div>
+
+            {/* Provider Tabs */}
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+              <button
+                type="button"
+                onClick={() => setActiveInstructionTab("gemini")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  activeInstructionTab === "gemini"
+                    ? "bg-blue-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                Google Gemini (Recommended)
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveInstructionTab("groq")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  activeInstructionTab === "groq"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                Groq Cloud
+              </button>
+            </div>
+
+            {/* Input field */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 block">
+                {activeInstructionTab === "gemini" ? "Google Gemini API Key(s)" : "Groq API Key"}
+              </label>
+              <div className="relative">
+                <input
+                  type={isKeyVisible ? "text" : "password"}
+                  value={apiKeys[activeInstructionTab] || ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setApiKeys(prev => ({
+                      ...prev,
+                      [activeInstructionTab]: val
+                    }));
+                  }}
+                  placeholder={
+                    activeInstructionTab === "gemini"
+                      ? "AIzaSy... (Paste multiple keys separated by comma to cycle)"
+                      : "gsk_... (Enter your Groq key)"
+                  }
+                  className="w-full px-3 py-2 pr-10 border border-slate-200 rounded-lg font-mono text-xs text-slate-800 focus:outline-hidden focus:border-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsKeyVisible(!isKeyVisible)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  {isKeyVisible ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-400 font-medium">
+                🔒 Keys are saved strictly in your browser's private local storage and are never logged or stored on central servers.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={handleClearApiKey}
+                className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800 font-bold cursor-pointer"
+              >
+                Clear Saved Keys
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveApiKey}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition cursor-pointer flex items-center gap-1.5"
+              >
+                {saveStatus === "saved" ? (
+                  <>
+                    <Check size={13} strokeWidth={3} />
+                    <span>Configuration Saved!</span>
+                  </>
+                ) : (
+                  <span>Save Configuration</span>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* BENEFIT UNLOCKED MODAL POPUP */}
       {showBenefitsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-950/80 backdrop-blur-md transition-all">
@@ -1808,7 +1628,7 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
                   DEDICATED VIP LANE ACTIVATED
                 </p>
                 <div className="text-xs text-slate-300 leading-relaxed max-w-sm mx-auto">
-                  You've successfully secured your custom AI credentials. Our Alice settlement system has verified and loaded the model credentials into your browser's private sandbox slot.
+                  Your custom AI credentials have been verified and loaded into your browser's private local storage.
                 </div>
               </div>
 
