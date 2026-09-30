@@ -168,6 +168,31 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
     return () => clearInterval(interval);
   }, [currentQuestionId, modalType]);
 
+  // Auto-save active examination progress to localStorage for crash resilience
+  useEffect(() => {
+    if (!testName || questions.length === 0) return;
+    try {
+      const activeData = {
+        testName,
+        questions,
+        testState: {
+          questions,
+          userResponses,
+          questionStatuses,
+          timeSpent,
+          timeLeft,
+          isCompleted: false,
+          testName,
+        },
+        currentSubject,
+        currentQuestionId,
+      };
+      localStorage.setItem("jee_cbt_active_exam", JSON.stringify(activeData));
+    } catch (e) {
+      console.warn("Unable to sync active test state to storage:", e);
+    }
+  }, [testName, questions, userResponses, questionStatuses, timeSpent, timeLeft, currentSubject, currentQuestionId]);
+
   // --- KEYBOARD SHORTCUTS CONTROLLER ---
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
