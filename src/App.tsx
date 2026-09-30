@@ -18,6 +18,9 @@ import { AdminControlHub } from "./components/AdminControlHub";
 import { ResultsPage } from "./components/ResultsPage";
 import { PrivacyPolicy } from "./components/PrivacyPolicy";
 
+import { useFullscreen } from "./hooks/useFullscreen";
+import { useOrientation } from "./hooks/useOrientation";
+
 type AppStep = "LANDING" | "UPLOAD" | "CBT" | "ANALYTICS" | "ADMIN" | "RESULTS" | "PRIVACY";
 
 export default function App() {
@@ -58,36 +61,10 @@ export default function App() {
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [walletModalTab, setWalletModalTab] = useState<"auth" | "wallet" | "admin" | "transactions" | "mailbox" | undefined>(undefined);
 
-  // Screen controller and Landscape Recommendations
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showOrientationWarning, setShowOrientationWarning] = useState(false);
+  // Screen controller and Landscape Recommendations via custom hooks
+  const { isFullscreen, toggleFullscreen } = useFullscreen();
+  const { isPortraitMobile: showOrientationWarning } = useOrientation(800);
   const [showFullscreenRecommend, setShowFullscreenRecommend] = useState(true);
-
-  useEffect(() => {
-    const onFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener("fullscreenchange", onFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", onFullscreenChange);
-
-    const checkOrientation = () => {
-      // If width < 800 and in portrait
-      if (window.innerWidth < 800 && window.innerHeight > window.innerWidth) {
-        setShowOrientationWarning(true);
-      } else {
-        setShowOrientationWarning(false);
-      }
-    };
-
-    checkOrientation();
-    window.addEventListener("resize", checkOrientation);
-
-    return () => {
-      document.removeEventListener("fullscreenchange", onFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", onFullscreenChange);
-      window.removeEventListener("resize", checkOrientation);
-    };
-  }, []);
 
   // Periodic background wallet sync to match header/modals credits perfectly
   useEffect(() => {
@@ -109,18 +86,6 @@ export default function App() {
     }, 4500); // Sync every 4.5 seconds
     return () => clearInterval(interval);
   }, [userAccount?.id, userAccount?.credits]);
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch((err) => {
-        console.warn(`Error enabling fullscreen: ${err.message}`);
-      });
-    } else {
-      document.exitFullscreen().catch((err) => {
-        console.warn(`Error exiting fullscreen: ${err.message}`);
-      });
-    }
-  };
 
   const handleRotateDevice = () => {
     try {

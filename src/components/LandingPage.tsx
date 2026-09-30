@@ -34,6 +34,8 @@ import {
 } from "lucide-react";
 
 import { UserProfile } from "../types";
+import { useFullscreen } from "../hooks/useFullscreen";
+import { useOrientation } from "../hooks/useOrientation";
 
 interface LandingPageProps {
   onEnterPlatform: (viewStep?: "UPLOAD" | "ANALYTICS") => void;
@@ -48,75 +50,10 @@ export function LandingPage({ onEnterPlatform, savedPapersCount, attemptsCount, 
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
   
-  // Fullscreen support logic
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showOrientationWarning, setShowOrientationWarning] = useState(false);
+  // Custom hooks for screen handling
+  const { isFullscreen, toggleFullscreen } = useFullscreen();
+  const { isPortraitMobile: showOrientationWarning } = useOrientation(800);
   const [showFullscreenRecommend, setShowFullscreenRecommend] = useState(true);
-
-  // FOMO urgency countdown state
-  const [countdownMinutes, setCountdownMinutes] = useState(14);
-  const [countdownSeconds, setCountdownSeconds] = useState(52);
-  const [fomoPacksLeft, setFomoPacksLeft] = useState(45);
-
-  React.useEffect(() => {
-    const timer = setInterval(() => {
-      if (countdownSeconds > 0) {
-        setCountdownSeconds(prev => prev - 1);
-      } else if (countdownMinutes > 0) {
-        setCountdownMinutes(prev => prev - 1);
-        setCountdownSeconds(59);
-      } else {
-        setCountdownMinutes(14);
-        setCountdownSeconds(52);
-      }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [countdownSeconds, countdownMinutes]);
-
-  React.useEffect(() => {
-    // Slowly decrease packs left to increase real intensity, bounding it at minimum 3
-    const interval = setInterval(() => {
-      setFomoPacksLeft(prev => {
-        if (prev > 3) {
-          return prev - 1;
-        }
-        return prev;
-      });
-    }, 160000); // 2.6 minutes interval
-    return () => clearInterval(interval);
-  }, []);
-
-  React.useEffect(() => {
-    const onFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener("fullscreenchange", onFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", onFullscreenChange);
-
-    const checkOrientation = () => {
-      if (window.innerWidth < 800 && window.innerHeight > window.innerWidth) {
-        setShowOrientationWarning(true);
-      } else {
-        setShowOrientationWarning(false);
-      }
-    };
-    checkOrientation();
-    window.addEventListener("resize", checkOrientation);
-
-    return () => {
-      document.removeEventListener("fullscreenchange", onFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", onFullscreenChange);
-      window.removeEventListener("resize", checkOrientation);
-    };
-  }, []);
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-      document.exitFullscreen().catch(() => {});
-    }
-  };
 
   const stats = [
     { label: "JEE Candidates Joined", value: "2,847+", desc: "Aspirants who parsed their coaching mocks this month" },
