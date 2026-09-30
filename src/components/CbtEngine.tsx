@@ -927,7 +927,7 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
             </div>
           </div>
 
-          {/* Real-time MathonGo style Analysis panel at bottom of sidebar */}
+          {/* Real-time telemetry analysis panel at bottom of sidebar */}
           <div className="bg-slate-900 p-4 text-white shrink-0 shadow-inner">
             <p className="text-[9px] uppercase tracking-widest text-slate-400 font-bold text-left leading-none mb-2.5">
               Real-time Analysis
@@ -992,7 +992,7 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
               <AlertTriangle size={36} className="text-amber-500 mx-auto animate-bounce mb-3" />
               <h3 className="font-extrabold text-slate-900 text-sm uppercase">Are you absolutely sure to submit?</h3>
               <p className="text-xs text-slate-500 mt-2 select-text">
-                Your examination responses will be locked and saved for scoring. You will immediately access the MathonGo and Competishun-styled analytics reports with step-by-step model solutions.
+                Your examination responses will be locked and saved for scoring. You will immediately access comprehensive performance analytics with chapter-wise breakdowns and step-by-step solutions.
               </p>
 
               {/* Counts checklist summary */}

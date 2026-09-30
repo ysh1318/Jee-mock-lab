@@ -741,9 +741,9 @@ export function LandingPage({ onEnterPlatform, savedPapersCount, attemptsCount, 
                 Privacy Policy
               </button>
               <span>•</span>
-              <span>IIT Delhi-Kharagpur Syllabus Grid</span>
+              <span>JEE Advanced Syllabus Grid</span>
               <span>•</span>
-              <span>Allen / MathonGo Benchmark Metrics</span>
+              <span>NTA Calibrated Benchmark Metrics</span>
             </div>
           </div>
         </div>

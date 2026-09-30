@@ -1092,7 +1092,7 @@ export default function App() {
             <span>•</span>
             <span>Prescribed Calibration Standards</span>
             <span>•</span>
-            <span>MathonGo/Allen Scale Metrics</span>
+            <span>NTA Standardized Percentile Metrics</span>
           </div>
         </footer>
       )}

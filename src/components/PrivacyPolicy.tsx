@@ -96,10 +96,10 @@ export function PrivacyPolicy({ onBack }: PrivacyPolicyProps) {
             <section className="space-y-2">
               <h3 className="text-sm font-black text-[#1a3a5f] uppercase tracking-wider flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded bg-[#1a3a5f]" />
-                <span>1. Core Philosophy of Trust & Independence</span>
+                <span>1. Core Philosophy of Trust & Data Independence</span>
               </h3>
               <p>
-                As an independent educational tool developed by a fellow JEE 2026 candidate, this platform is built with a deep understanding of academic pressure and student privacy. We operate on a fundamental principle: <strong>Your mock test scores, study habits, and API usage quotas belong exclusively to you.</strong> We do not engage in data harvesting, monetization, or sharing with external commercial educational distributors.
+                As an independent educational mock testing platform, this system is built on a fundamental principle: <strong>Your mock test scores, study habits, and API usage quotas belong exclusively to you.</strong> We do not engage in data harvesting, monetization, or sharing with external commercial educational distributors.
               </p>
             </section>
 
