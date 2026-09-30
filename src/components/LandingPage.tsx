@@ -316,132 +316,75 @@ export function LandingPage({ onEnterPlatform, savedPapersCount, attemptsCount, 
 
       </section>
 
-      {/* MEET THE CREATOR & BREAK THE GRID SHOWCASE SECTION */}
-      <section id="fellow-aspirant-note" className="py-12 px-6 max-w-7xl mx-auto text-left">
-        <div className="bg-linear-to-br from-slate-900 via-[#0d1527] to-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
+      {/* THREE-STEP WORKFLOW PIPELINE SHOWCASE */}
+      <section id="workflow-pipeline" className="py-12 px-6 max-w-7xl mx-auto text-left">
+        <div className="bg-gradient-to-br from-slate-900 via-[#0d1527] to-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
           
           {/* Subtle background ambient glow */}
-          <div className="absolute top-0 right-0 w-80 h-80 bg-red-900/10 rounded-full blur-3xl -z-10" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-950/20 rounded-full blur-3xl -z-10" />
+          <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl -z-10" />
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-emerald-600/10 rounded-full blur-3xl -z-10" />
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center font-sans">
-            
-            {/* Left Column: Recreated Pixel-Perfect BREAK THE GRID Profile Card (Square Picture Style) */}
-            <div className="lg:col-span-6 xl:col-span-5 flex justify-center w-full">
-              <div 
-                id="break-the-grid-card"
-                className="w-full max-w-sm aspect-square bg-black rounded-2xl border border-slate-800 shadow-2xl relative overflow-hidden flex flex-col justify-between p-5 select-none hover:border-red-600/40 transition duration-300"
-                style={{
-                  backgroundImage: `
-                    linear-gradient(rgba(220, 38, 38, 0.08) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(220, 38, 38, 0.08) 1px, transparent 1px)
-                  `,
-                  backgroundSize: "16px 16px"
-                }}
-              >
-                {/* Diagonal Left border line */}
-                <div className="absolute left-[-15%] top-0 bottom-0 w-[4px] bg-red-600 rotate-[18deg] opacity-70 transform origin-top" />
-                <div className="absolute left-[8%] top-0 bottom-0 w-[2px] bg-red-600/40 rotate-[18deg] transform origin-top" />
-                
-                {/* Diagonal Right border line */}
-                <div className="absolute right-[8%] top-0 bottom-0 w-[2px] bg-red-600/40 rotate-[18deg] transform origin-top" />
-                <div className="absolute right-[-15%] top-0 bottom-0 w-[4px] bg-red-600 rotate-[18deg] opacity-70 transform origin-top" />
-
-                {/* Top Section */}
-                <div className="relative z-10">
-                  <p className="text-[9px] sm:text-[10px] font-mono font-bold tracking-[0.25em] text-red-500 uppercase flex items-center gap-1.5">
-                    <span>//</span> REFUSE ORDINARY
-                  </p>
-                </div>
-
-                {/* Main Middle section (Optimized for square ratio) */}
-                <div className="flex flex-col gap-4 relative z-10 my-auto text-left">
-                  {/* Big white/red typography */}
-                  <div className="flex flex-col font-sans font-black text-4xl sm:text-5xl tracking-tighter leading-[0.9] text-left">
-                    <span className="text-white drop-shadow-sm">BREAK</span>
-                    <span className="text-red-600 drop-shadow-md">THE</span>
-                    <span className="text-white drop-shadow-sm">GRID</span>
-                  </div>
-
-                  {/* Bullet Points with red square bullets */}
-                  <div className="border-l-2 border-red-600/50 pl-3 space-y-1.5 font-sans">
-                    {[
-                      "TECH & CODING",
-                      "MONEY & FREEDOM",
-                      "BTECH & HOSTEL LIFE",
-                      "BUILD. EARN. ESCAPE."
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 bg-red-600 shrink-0 transform rotate-45" />
-                        <span className="text-[9px] sm:text-[10px] font-extrabold tracking-wider text-slate-300 uppercase leading-none">
-                          {item}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Bottom Red Banner Bar (Stretched correctly) */}
-                <div className="w-[calc(100%+2.5rem)] -ml-5 -mb-5 bg-red-600 py-2.5 px-4 relative z-10 flex items-center justify-center transform -skew-x-12 select-none">
-                  <p className="text-[7.5px] font-mono font-black tracking-widest text-white uppercase text-center truncate pr-2 pl-2 skew-x-12">
-                    BREAKTHEGRID &nbsp;—&nbsp; THINK DIFFERENT &nbsp;·&nbsp; BUILD DIFFERENT &nbsp;·&nbsp; LIVE DIFFERENT
-                  </p>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Right Column: Restored Heading, About Me description and Instagram Contact info */}
-            <div className="lg:col-span-6 xl:col-span-7 space-y-5 text-left font-sans">
+          <div className="space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-800 pb-6">
               <div className="space-y-2">
-                <span className="text-[9.5px] bg-[#1a3a5f] text-blue-200/90 border border-blue-800/60 font-black px-2.5 py-1 rounded-full uppercase tracking-widest font-mono inline-block">
-                  🎓 Candidate to Candidate
+                <span className="text-[10px] bg-blue-500/10 text-blue-300 border border-blue-500/30 font-bold px-3 py-1 rounded-full uppercase tracking-widest font-mono inline-block">
+                  ⚡ High-Performance Pipeline
                 </span>
-                <h3 className="text-2xl sm:text-3.5xl font-black tracking-tight text-white leading-tight">
-                  By a Fellow JEE 2026 Aspirant <br />
-                  <span className="text-red-500">For Fellow Future Aspirants</span>
+                <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
+                  How JEE MockLab Works in 3 Simple Steps
                 </h3>
               </div>
+              <p className="text-xs text-slate-400 font-semibold max-w-md">
+                Turn any static mock test booklet, coaching PDF, or PYQ paper into an interactive simulation in under 30 seconds.
+              </p>
+            </div>
 
-              <div className="space-y-4 text-slate-200 text-xs sm:text-sm leading-relaxed font-semibold">
-                <p>
-                  Hey, I'm <strong className="text-white">BREAK THE GRID</strong>! As a fellow JEE 2026 aspirant grinding day and night for that dream score, I got tired of struggling with static PDF practice sheets and having to pay high premium subscriptions just to solve questions on a simulated mock test screen.
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Step 1 */}
+              <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-6 relative group hover:border-blue-500/40 transition">
+                <div className="w-10 h-10 rounded-xl bg-blue-950/80 border border-blue-600/30 flex items-center justify-center text-blue-400 font-mono font-bold text-sm mb-4">
+                  01
+                </div>
+                <h4 className="text-base font-bold text-white mb-2">Upload Test PDF</h4>
+                <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                  Drag and drop any PDF from coaching institutions or past JEE papers. No special formatting or pre-tagging required.
                 </p>
-                <p>
-                  I put <strong className="text-red-400 font-extrabold border-b border-red-500/30 pb-0.5">immense amount of real, painstaking hard work</strong> into developing this advanced sandboxed platform. My single objective was to solve student-facing roadblocks: converting flat test pages into dynamic NTA CBT palettes, providing automated AI chemistry/math derivations, and evaluating state list cutoffs instantly.
-                </p>
-                <p className="bg-red-950/40 border border-red-600/30 p-3.5 rounded-xl text-slate-300 flex items-start gap-2.5 shadow-inner">
-                  <span className="text-base leading-none">📢</span>
-                  <span>
-                    <strong className="text-white">Share it forward so it helps more students!</strong> If this tool saves your time or makes mock test preparation easier, <strong className="text-red-400">please share it with your fellow aspirants, study channels, and friends</strong>. Getting the word out is the absolute highest reward and motivation for me to keep improving this database!
-                  </span>
-                </p>
+                <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center gap-2 text-[10px] font-mono text-blue-300">
+                  <Upload size={12} />
+                  <span>Supports Scanned & Digital PDFs</span>
+                </div>
               </div>
 
-              {/* Instagram CTA block */}
-              <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-4 select-none">
-                <a 
-                  id="creator-instagram-link"
-                  href="https://www.instagram.com/break_thegrid/"
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="px-5 py-3 bg-red-600 hover:bg-red-700 active:scale-[0.98] transition-all rounded-xl font-black text-xs text-white shadow-lg shadow-red-650/15 flex items-center justify-center gap-2"
-                >
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
-                  </svg>
-                  <span>Connect with me on Instagram</span>
-                </a>
-                
-                <div className="flex items-center gap-1 text-slate-400 font-mono text-[11px]">
-                  <span>Tag:</span>
-                  <strong className="text-red-400 hover:underline">
-                    <a href="https://www.instagram.com/break_thegrid/" target="_blank" rel="noopener noreferrer">@break_thegrid</a>
-                  </strong>
+              {/* Step 2 */}
+              <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-6 relative group hover:border-purple-500/40 transition">
+                <div className="w-10 h-10 rounded-xl bg-purple-950/80 border border-purple-600/30 flex items-center justify-center text-purple-400 font-mono font-bold text-sm mb-4">
+                  02
+                </div>
+                <h4 className="text-base font-bold text-white mb-2">AI Extraction & LaTeX</h4>
+                <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                  Our Gemini engine isolates questions, diagrams, Section A/B numericals, and formats mathematical formulas into crisp KaTeX.
+                </p>
+                <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center gap-2 text-[10px] font-mono text-purple-300">
+                  <Sparkles size={12} />
+                  <span>Sub-second Parsing Telemetry</span>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-6 relative group hover:border-emerald-500/40 transition">
+                <div className="w-10 h-10 rounded-xl bg-emerald-950/80 border border-emerald-600/30 flex items-center justify-center text-emerald-400 font-mono font-bold text-sm mb-4">
+                  03
+                </div>
+                <h4 className="text-base font-bold text-white mb-2">Authentic CBT Exam</h4>
+                <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                  Solve under real NTA exam conditions with authentic question palettes, countdown timers, and instant JoSAA percentile analysis.
+                </p>
+                <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center gap-2 text-[10px] font-mono text-emerald-300">
+                  <Play size={12} />
+                  <span>Instant Marksheet & Derivations</span>
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </section>
