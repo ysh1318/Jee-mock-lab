@@ -19,7 +19,10 @@ export function AnalyticsDashboard({ testState, onRestart }: AnalyticsDashboardP
   // --- STATE FOR REVIEW SECTION ---
   const [activeSubjectFilter, setActiveSubjectFilter] = useState<Subject | "All">("All");
   const [activeStatusFilter, setActiveStatusFilter] = useState<"All" | "Correct" | "Incorrect" | "Unattempted">("All");
-  const [reattempts, setReattempts] = useState<Record<string, string>>({}); // questionId -> reattempt answer
+  const [reattempts, setReattempts] = useState<Record<string, string>>({}); // questionId -> latest reattempt answer
+  const [reattemptHistory, setReattemptHistory] = useState<Record<string, string[]>>({}); // questionId -> array of attempted options
+  const [revealedKeys, setRevealedKeys] = useState<Record<string, boolean>>({}); // questionId -> true if explicitly revealed
+  const [showHintId, setShowHintId] = useState<string | null>(null);
   const [showExplanationId, setShowExplanationId] = useState<string | null>(null);
 
   // --- MATHONGO & ALLEN STYLE ANALYTICS COMPUTATION ---
@@ -173,11 +176,41 @@ export function AnalyticsDashboard({ testState, onRestart }: AnalyticsDashboardP
     });
   }, [questions, userResponses, questionStatuses, activeSubjectFilter, activeStatusFilter]);
 
+  // Helper to compare answers with numerical tolerance
+  const isAnswerMatching = (attempt: string, correct: string) => {
+    if (!attempt || !correct) return false;
+    const cleanAttempt = attempt.trim().toLowerCase();
+    const cleanCorrect = correct.trim().toLowerCase();
+    if (cleanAttempt === cleanCorrect) return true;
+
+    // Check numerical equivalence (e.g. "5" === "5.0")
+    const numAttempt = parseFloat(cleanAttempt);
+    const numCorrect = parseFloat(cleanCorrect);
+    if (!isNaN(numAttempt) && !isNaN(numCorrect)) {
+      return Math.abs(numAttempt - numCorrect) < 0.001;
+    }
+    return false;
+  };
+
   // Re-attempt handler
   const handleReattempt = (qId: string, answer: string) => {
     setReattempts((prev) => ({
       ...prev,
       [qId]: answer,
+    }));
+    setReattemptHistory((prev) => {
+      const existing = prev[qId] || [];
+      if (!existing.includes(answer)) {
+        return { ...prev, [qId]: [...existing, answer] };
+      }
+      return prev;
+    });
+  };
+
+  const handleToggleReveal = (qId: string) => {
+    setRevealedKeys((prev) => ({
+      ...prev,
+      [qId]: !prev[qId]
     }));
   };
 
@@ -1086,128 +1119,248 @@ export function AnalyticsDashboard({ testState, onRestart }: AnalyticsDashboardP
                   </div>
 
                   {/* MCQ Options Display */}
-                  {q.options && q.options.length > 0 && (
-                    <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3 pl-3">
-                      {q.options.map((opt, oIdx) => {
-                        const letter = String.fromCharCode(65 + oIdx);
-                        const isStudentPic = userReply === letter;
-                        const isCorrectKey = q.correctAnswer === letter;
+                  {q.options && q.options.length > 0 && (() => {
+                    const isSolvedOnRetry = reattempts[q.id] && isAnswerMatching(reattempts[q.id], q.correctAnswer);
+                    const canReveal = responseState === "Correct" || isSolvedOnRetry || revealedKeys[q.id];
+                    const tries = reattemptHistory[q.id] || [];
 
-                        return (
-                          <div
-                            key={oIdx}
-                            className={`p-3 text-xs rounded-lg border leading-snug flex items-start gap-4 ${
-                              isCorrectKey 
-                                ? "bg-emerald-50 border-emerald-300 text-emerald-900" 
-                                : isStudentPic
-                                ? "bg-rose-50 border-rose-300 text-rose-900"
-                                : "bg-slate-50/50 border-slate-200 text-slate-600"
-                            }`}
-                          >
-                            <span className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 border select-none ${
-                              isCorrectKey
-                                ? "bg-emerald-500 text-white border-emerald-600"
-                                : isStudentPic
-                                ? "bg-rose-500 text-white border-rose-600"
-                                : "bg-white text-slate-500 border-slate-300"
-                            }`}>
-                              {letter}
-                            </span>
-                            <div className="flex-1 mt-0.5">
-                              <MarkdownMath text={opt} />
+                    return (
+                      <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3 pl-3">
+                        {q.options.map((opt, oIdx) => {
+                          const letter = String.fromCharCode(65 + oIdx);
+                          const isStudentPic = userReply === letter;
+                          const isCorrectKey = q.correctAnswer === letter;
+                          const hasAttemptedLetter = tries.includes(letter);
+                          const isWrongAttempt = hasAttemptedLetter && !isCorrectKey;
+
+                          let style = "bg-slate-50/50 border-slate-200 text-slate-600";
+                          let badgeStyle = "bg-white text-slate-500 border-slate-300";
+
+                          if (canReveal && isCorrectKey) {
+                            style = "bg-emerald-50 border-emerald-300 text-emerald-900";
+                            badgeStyle = "bg-emerald-500 text-white border-emerald-600";
+                          } else if (isWrongAttempt || (!canReveal && isStudentPic && !isCorrectKey)) {
+                            style = "bg-rose-50 border-rose-300 text-rose-900";
+                            badgeStyle = "bg-rose-500 text-white border-rose-600";
+                          } else if (canReveal && isStudentPic && !isCorrectKey) {
+                            style = "bg-rose-50 border-rose-300 text-rose-900";
+                            badgeStyle = "bg-rose-500 text-white border-rose-600";
+                          }
+
+                          return (
+                            <div
+                              key={oIdx}
+                              className={`p-3 text-xs rounded-lg border leading-snug flex items-start gap-4 transition-all ${style}`}
+                            >
+                              <span className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 border select-none ${badgeStyle}`}>
+                                {letter}
+                              </span>
+                              <div className="flex-1 mt-0.5">
+                                <MarkdownMath text={opt} />
+                              </div>
+                              {isWrongAttempt && (
+                                <span className="text-[10px] font-bold text-rose-600 bg-rose-100 px-1.5 py-0.5 rounded shrink-0">
+                                  ✗ Wrong
+                                </span>
+                              )}
+                              {canReveal && isCorrectKey && (
+                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded shrink-0">
+                                  ✓ Correct
+                                </span>
+                              )}
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
 
                   {/* Responses Summary */}
-                  <div className="mt-5 bg-slate-50 border border-slate-150 p-4 rounded-lg flex flex-wrap gap-x-6 gap-y-3 justify-between items-center text-xs">
-                    <div className="flex gap-6 select-text">
-                      <div>
-                        <span className="text-slate-400 font-bold uppercase text-[9px] block">Your Response</span>
-                        <span className={`font-bold mt-0.5 block ${
-                          responseState === "Correct" ? "text-emerald-700" :
-                          responseState === "Incorrect" ? "text-rose-700" : "text-slate-500 italic"
-                        }`}>
-                          {userReply ? userReply : "No Response Saved"}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 font-bold uppercase text-[9px] block">Correct Key</span>
-                        <span className="font-bold text-slate-800 block mt-0.5">
-                          {q.correctAnswer}
-                        </span>
-                      </div>
-                    </div>
+                  {(() => {
+                    const isSolvedOnRetry = reattempts[q.id] && isAnswerMatching(reattempts[q.id], q.correctAnswer);
+                    const canReveal = responseState === "Correct" || isSolvedOnRetry || revealedKeys[q.id];
 
-                    <div className="flex gap-2 select-none">
-                      {/* Toggle solution button */}
-                      <button
-                        onClick={() => setShowExplanationId(showSolution ? null : q.id)}
-                        className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded shadow-xs cursor-pointer transition"
-                      >
-                        {showSolution ? "Hide Solution" : "View Step-by-Step Solution"}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* RE-ATTEMPT SECTION (if skipped/incorrect) */}
-                  {responseState !== "Correct" && (
-                    <div className="mt-4 border border-indigo-100 bg-indigo-50/20 px-4 py-3 rounded-lg">
-                      <div className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-widest mb-2 select-none">
-                        🎯 Diagnostic Re-Attempt Box
-                      </div>
-                      
-                      {q.section === Section.A ? (
-                        <div className="flex flex-wrap gap-2">
-                          {["A", "B", "C", "D"].map((letter) => {
-                            const isSelected = reattempts[q.id] === letter;
-                            const hasTried = !!reattempts[q.id];
-                            const isCorrectRe = letter === q.correctAnswer;
-                            
-                            return (
-                              <button
-                                key={letter}
-                                onClick={() => handleReattempt(q.id, letter)}
-                                disabled={hasTried}
-                                className={`px-3 py-1 border text-xs font-bold rounded transition cursor-pointer select-none ${
-                                  isSelected
-                                    ? isCorrectRe
-                                      ? "bg-emerald-600 text-white border-emerald-600"
-                                      : "bg-rose-600 text-white border-rose-600"
-                                    : hasTried && isCorrectRe
-                                    ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                                    : "bg-white text-slate-600 hover:bg-slate-50 border-slate-200"
-                                }`}
-                              >
-                                Try ({letter})
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="flex gap-2 items-center max-w-xs">
-                          <input
-                            type="text"
-                            placeholder="Enter new numerical value"
-                            value={reattempts[q.id] || ""}
-                            onChange={(e) => handleReattempt(q.id, e.target.value)}
-                            disabled={!!reattempts[q.id] && reattempts[q.id] === q.correctAnswer}
-                            className="bg-white border text-xs px-3 py-1 rounded w-full font-bold outline-hidden"
-                          />
-                          {(reattempts[q.id] || "") && (
-                            <span className={`text-[10px] font-black shrink-0 ${
-                              reattempts[q.id]?.trim() === q.correctAnswer ? "text-emerald-600" : "text-rose-500"
+                    return (
+                      <div className="mt-5 bg-slate-50 border border-slate-150 p-4 rounded-lg flex flex-wrap gap-x-6 gap-y-3 justify-between items-center text-xs">
+                        <div className="flex flex-wrap gap-6 select-text items-center">
+                          <div>
+                            <span className="text-slate-400 font-bold uppercase text-[9px] block">Your Exam Response</span>
+                            <span className={`font-bold mt-0.5 block ${
+                              responseState === "Correct" ? "text-emerald-700" :
+                              responseState === "Incorrect" ? "text-rose-700" : "text-slate-500 italic"
                             }`}>
-                              {reattempts[q.id]?.trim() === q.correctAnswer ? "✓ Correct!" : "✗ Try again!"}
+                              {userReply ? userReply : "No Response Saved"}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-slate-400 font-bold uppercase text-[9px] block">Correct Key</span>
+                            {canReveal ? (
+                              <span className="font-bold text-emerald-800 block mt-0.5 font-mono">
+                                {q.correctAnswer}
+                              </span>
+                            ) : (
+                              <span className="font-semibold text-slate-400 block mt-0.5 italic text-[11px]">
+                                Hidden (Retry below to solve)
+                              </span>
+                            )}
+                          </div>
+
+                          {isSolvedOnRetry && (
+                            <span className="text-emerald-700 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">
+                              ✓ Solved on Re-attempt!
                             </span>
                           )}
                         </div>
-                      )}
+
+                        <div className="flex items-center gap-2 select-none">
+                          {/* Use Hint Button */}
+                          <button
+                            type="button"
+                            onClick={() => setShowHintId(showHintId === q.id ? null : q.id)}
+                            className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold rounded shadow-2xs cursor-pointer transition flex items-center gap-1"
+                          >
+                            <span>💡</span>
+                            <span>{showHintId === q.id ? "Hide Hint" : "Use Hint"}</span>
+                          </button>
+
+                          {/* Reveal Key Button */}
+                          {!canReveal && (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleReveal(q.id)}
+                              className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded shadow-2xs cursor-pointer transition"
+                            >
+                              Reveal Answer
+                            </button>
+                          )}
+
+                          {/* Toggle solution button */}
+                          <button
+                            onClick={() => setShowExplanationId(showSolution ? null : q.id)}
+                            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded shadow-xs cursor-pointer transition"
+                          >
+                            {showSolution ? "Hide Solution" : "Step Solution"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* HINT BANNER */}
+                  {showHintId === q.id && (
+                    <div className="mt-3 p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-xl text-amber-950 text-xs leading-relaxed animate-fade-in flex items-start gap-2.5">
+                      <span className="text-base leading-none">💡</span>
+                      <div>
+                        <strong className="block text-[11px] uppercase tracking-wider text-amber-900 font-extrabold mb-1">
+                          Diagnostic Hint ({q.topic} - {q.subject}):
+                        </strong>
+                        <p className="text-slate-700 font-medium">
+                          Focus on the fundamental rules of <span className="font-bold text-amber-950">{q.topic}</span>. 
+                          {q.section === Section.B ? " Re-check calculation precision, unit conversions, and sign conventions before submitting." : " Eliminate extreme values and check dimensional consistency of the options."}
+                        </p>
+                      </div>
                     </div>
                   )}
+
+                  {/* RE-ATTEMPT SECTION (Interactive retry until correct) */}
+                  {responseState !== "Correct" && (() => {
+                    const isSolved = reattempts[q.id] && isAnswerMatching(reattempts[q.id], q.correctAnswer);
+                    const tries = reattemptHistory[q.id] || [];
+
+                    return (
+                      <div className="mt-4 border border-indigo-100 bg-indigo-50/20 px-4 py-3 rounded-lg">
+                        <div className="flex items-center justify-between mb-2.5 select-none">
+                          <div className="text-[10px] font-extrabold text-indigo-600 uppercase tracking-widest flex items-center gap-1.5">
+                            <span>🎯 Diagnostic Re-Attempt Box</span>
+                            {tries.length > 0 && (
+                              <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.2 rounded font-mono text-[9px]">
+                                Attempts: {tries.length}
+                              </span>
+                            )}
+                          </div>
+                          {isSolved && (
+                            <span className="text-emerald-700 font-black text-xs">
+                              🎉 Correct Answer Found!
+                            </span>
+                          )}
+                        </div>
+                        
+                        {q.section === Section.A ? (
+                          <div className="flex flex-wrap gap-2.5">
+                            {["A", "B", "C", "D"].map((letter) => {
+                              const hasTried = tries.includes(letter);
+                              const isThisCorrect = isAnswerMatching(letter, q.correctAnswer);
+                              const isCurrentSelect = reattempts[q.id] === letter;
+
+                              let btnClass = "bg-white text-slate-700 hover:bg-slate-50 border-slate-200";
+                              if (hasTried) {
+                                if (isThisCorrect) {
+                                  btnClass = "bg-emerald-600 text-white border-emerald-600 shadow-sm";
+                                } else {
+                                  btnClass = "bg-rose-100 text-rose-800 border-rose-300 opacity-90 line-through";
+                                }
+                              } else if (isSolved) {
+                                btnClass = "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed";
+                              }
+
+                              return (
+                                <button
+                                  key={letter}
+                                  type="button"
+                                  onClick={() => handleReattempt(q.id, letter)}
+                                  disabled={hasTried || isSolved}
+                                  className={`px-3.5 py-1.5 border text-xs font-bold rounded-lg transition-all cursor-pointer select-none flex items-center gap-1.5 ${btnClass}`}
+                                >
+                                  <span>Option ({letter})</span>
+                                  {hasTried && isThisCorrect && <span>✓</span>}
+                                  {hasTried && !isThisCorrect && <span>✗</span>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col sm:flex-row gap-2.5 items-start sm:items-center max-w-md">
+                            <div className="flex-1 w-full flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="Enter numerical answer..."
+                                value={reattempts[q.id] || ""}
+                                onChange={(e) => setReattempts((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" && reattempts[q.id]) {
+                                    handleReattempt(q.id, reattempts[q.id]);
+                                  }
+                                }}
+                                disabled={isSolved}
+                                className="bg-white border border-slate-200 text-xs px-3 py-1.5 rounded-lg w-full font-bold outline-hidden focus:border-indigo-400"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (reattempts[q.id]) {
+                                    handleReattempt(q.id, reattempts[q.id]);
+                                  }
+                                }}
+                                disabled={!reattempts[q.id] || isSolved}
+                                className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white text-xs font-bold rounded-lg shrink-0 transition"
+                              >
+                                Submit
+                              </button>
+                            </div>
+
+                            {(reattempts[q.id] || "") && tries.length > 0 && (
+                              <span className={`text-xs font-black shrink-0 ${
+                                isSolved ? "text-emerald-600" : "text-rose-500"
+                              }`}>
+                                {isSolved ? "✓ Correct!" : "✗ Try again!"}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* STEP SOLUTION EXHIBITION */}
                   {showSolution && q.explanation && (
