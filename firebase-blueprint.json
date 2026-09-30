@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "user": {
+      "title": "User Profile",
+      "description": "User account containing their general calibration profile, custom API keys, and remaining credits.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase authentication unique identifier" },
+        "email": { "type": "string", "description": "Registered email of the candidate" },
+        "displayName": { "type": "string", "description": "Candidate name" },
+        "category": { "type": "string", "description": "JEE category: General, OBC, EWS, SC, ST" },
+        "homeState": { "type": "string", "description": "JEE home state for quota calculations" },
+        "gender": { "type": "string", "description": "Gender: Female or Neutral" },
+        "targetPercentile": { "type": "number", "description": "Target percentile score" },
+        "credits": { "type": "integer", "description": "Active remaining parsing credits" },
+        "customGeminiKey": { "type": "string", "description": "User's own custom Gemini API key" },
+        "customGroqKey": { "type": "string", "description": "User's own custom Groq API key" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Signup date-time" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp" }
+      },
+      "required": ["uid", "email", "credits"]
+    },
+    "purchaseRequest": {
+      "title": "Purchase Request",
+      "description": "UPI P2P payment requests waiting for confirmation or auto-audited by the Alice engine.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique transaction ID" },
+        "userId": { "type": "string", "description": "Reference to the purchasing user" },
+        "userEmail": { "type": "string", "description": "Purchasing user email for audit logs" },
+        "utrNumber": { "type": "string", "description": "12-digit bank transaction reference number (UTR)" },
+        "pack": { "type": "string", "enum": ["2_credits", "5_credits", "10_credits"], "description": "The credit package purchased" },
+        "amount": { "type": "number", "description": "rupees amount paid (₹29, ₹59 or ₹99)" },
+        "status": { "type": "string", "enum": ["pending", "verifying", "approved", "declined"], "description": "Current status of transactional check" },
+        "purchaseDate": { "type": "string", "format": "date-time", "description": "Submission date" },
+        "expiresAt": { "type": "string", "format": "date-time", "description": "Expiry date 30 days after" },
+        "approvedAt": { "type": "string", "format": "date-time", "description": "Verification date" }
+      },
+      "required": ["id", "userId", "userEmail", "utrNumber", "pack", "amount", "status"]
+    },
+    "creditTransaction": {
+      "title": "Credit Transaction Log",
+      "description": "Audit trails record tracking user credit additions (purchases, bonuses) and subtractions (PDF parses).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Log identifier" },
+        "userId": { "type": "string", "description": "Associated user ID" },
+        "amount": { "type": "integer", "description": "Negative for burns, positive for additions" },
+        "type": { "type": "string", "enum": ["signup_bonus", "purchase_grant", "pdf_parse_burn", "admin_adjustment"], "description": "Nature of the transaction" },
+        "description": { "type": "string", "description": "Short explanation of the log" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Transaction date-time" }
+      },
+      "required": ["id", "userId", "amount", "type", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "Information and credit balance of the registered student"
+    },
+    "/purchaseRequests/{requestId}": {
+      "schema": "purchaseRequest",
+      "description": "UPI ledger transactions pending or finalized"
+    },
+    "/users/{userId}/transactions/{transactionId}": {
+      "schema": "creditTransaction",
+      "description": "Historical audit trailing of student's credit logs"
+    }
+  }
+}

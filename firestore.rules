@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Global Security Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && 
+        request.auth.token.email == "dadapajiop@gmail.com" && 
+        request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- CANDIDATE USERS COLLECTION ---
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Candidate Profile Creation (Sign Up / Auth)
+      allow create: if isOwner(userId) && 
+        isValidId(userId) && 
+        request.resource.data.keys().hasAll(['uid', 'email', 'credits', 'role', 'createdAt']) &&
+        request.resource.data.uid == userId &&
+        request.resource.data.email is string &&
+        request.resource.data.email.size() <= 256 &&
+        // Secure starter credits to prevent client hacks
+        request.resource.data.credits == 3 &&
+        request.resource.data.role == "user";
+
+      // Profile Update
+      allow update: if (isOwner(userId) && 
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['credits', 'role', 'uid', 'email', 'createdAt'])) || 
+        isAdmin();
+
+      allow delete: if isAdmin();
+
+      // --- SUB-COLLECTION: CREDIT TRANSACTIONS LEDGER ---
+      match /transactions/{transactionId} {
+        allow read: if isOwner(userId) || isAdmin();
+        
+        // Block all client-side writes to transactions! Writable only via Admin SDK on Server.
+        allow create, update, delete: if isAdmin();
+      }
+    }
+
+    // --- UPI PURCHASE REQUESTS LEDGER ---
+    match /purchaseRequests/{requestId} {
+      allow read: if (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow list: if (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
+      
+      // User can submit their own purchase with pending or verifying status
+      allow create: if isSignedIn() && 
+        isValidId(requestId) &&
+        request.resource.data.keys().hasAll(['id', 'userId', 'userEmail', 'utrNumber', 'pack', 'amount', 'status', 'purchaseDate']) &&
+        request.resource.data.id == requestId &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.utrNumber is string &&
+        request.resource.data.utrNumber.size() == 12 &&
+        request.resource.data.pack in ['2_credits', '5_credits', '10_credits'] &&
+        (request.resource.data.amount == 29 || request.resource.data.amount == 59 || request.resource.data.amount == 99) &&
+        request.resource.data.status in ['pending', 'verifying'];
+
+      // Only admins can approve or modify purchase statuses (protect terminal state)
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "projectId": "jeemocklab",
+  "appId": "1:917010364179:web:2f486d6c64325f59f90ce6",
+  "apiKey": "AIzaSyBvREbjt2lsFcT9dfTFK5RosaPhXSuYo7c",
+  "authDomain": "jeemocklab.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "jeemocklab.firebasestorage.app",
+  "messagingSenderId": "917010364179",
+  "measurementId": ""
+}

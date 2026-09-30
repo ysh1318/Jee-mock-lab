@@ -1,0 +1,8 @@
+{
+  "name": "JEE Mains CBT Mock Test Simulator",
+  "description": "Premium full-stack PDF-to-Test simulator featuring realistic NTA CBT engine, LaTeX math rendering, numerical keypad, and MathonGo/Allen style performance analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
