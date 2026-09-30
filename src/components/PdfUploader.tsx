@@ -12,63 +12,7 @@ import {
 import { Question, UserAccount } from "../types";
 import { PRESET_MOCK_TEST } from "./data/presetTest";
 
-const ALICE_DIALOGUE_POOL = {
-  cheering: [
-    "Go go go, Rin-chan! No equation stands a chance! 📣",
-    "Whoooo! Look at those math symbols flying out! You're a parsing superstar! ✨",
-    "You got this, Rin! Extract those Chemistry reaction formulas! 💖",
-    "Go fight! Standard-grade mock questions key set! 🚀"
-  ],
-  ramen: [
-    "Mmm... this hot spicy Ramen tastes amazing! Want a bite, Rin-chan? 🍜",
-    "Slurp slurp... Do Chemistry isomers smell like tasty pork broth? 🍥",
-    "Ramen, coffee, and definite integrals are the breakfast of champions! 🍥",
-    "Eating hot noodles triggers active brain power! Care for some? 🍜"
-  ],
-  sleeping: [
-    "Zzz... only five more minutes mom... I'm integrating calculus bounds... 😴",
-    "Zzz... atomic Bohr orbits make such cozy pillows... cuddle... 💤",
-    "Zzz... why do complex pulley symbols keep jumping around in my head... 🥱",
-    "Zzz... don't worry, my subconscious is cheering for you... 😴"
-  ],
-  boba: [
-    "Ah! Brown sugar Boba tea! The tapioca pearls look like little atomic spheres! 🧋",
-    "Sip, sip... Double sugar gives you double parsing speed! 🧋",
-    "Sweet sweet boba milk turns complex Physics coordinate vector math into easy fun! 🧋",
-    "Nothing beats cold bubble milk tea when we are auditing equations! ✨"
-  ],
-  peace: [
-    "Peace peace! You've got this, Rin-chan! ✌️",
-    "Perfect coordinate grid alignment achieved! Bravo! ✌️",
-    "Woohoo! Rin-chan, you are literally the smartest black-haired coder! 🎉",
-    "Smile! We're extracting this mock test beautifully! 📸"
-  ]
-};
 
-const RIN_DIALOGUE_POOL = {
-  idle: [
-    "Calibrating neural layout coordinates for the mock test...",
-    "Waking up NLP scanners to parse JEE syllabus chapters..."
-  ],
-  Physics: [
-    "Writing OCR coordinate vector parameters for Physics MCQs... ⚙️",
-    "Normalizing electromagnetic field equations and pulleys... ⚙️",
-    "Converting kinematic and thermodynamics formulas into clean display LaTeX... ⚙️",
-    "Securing standard MCQ layouts for Physics Section... ⚙️"
-  ],
-  Chemistry: [
-    "Parsing Chemistry organic isomers and nomenclature chains... 🧪",
-    "Formulating chemical gas equilibria constants Kc and Kp... 🧪",
-    "Balancing chemical redox stoichiometry ratios... 🧪",
-    "Converting hybrid orbitals into structured formulas... 🧪"
-  ],
-  Mathematics: [
-    "Extracting Math definite calculus double integrals... 📈",
-    "Structuring 3D vector math and direction cosines... 📈",
-    "Formatting binomial progression sequence matrices... 📈",
-    "Confirming differentiability limits of the mock equations... 📈"
-  ]
-};
 
 export interface PartStatus {
   partIndex: number;
@@ -216,86 +160,8 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
   const [activeInstructionTab, setActiveInstructionTab] = useState<"gemini" | "groq">("gemini");
   const [showBenefitsModal, setShowBenefitsModal] = useState(false);
 
-  // Custom high-resolution customizable images
-  const [rinImageUrl, setRinImageUrl] = useState(() => {
-    try {
-      return localStorage.getItem("user_rin_image_url") || "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&q=80&w=450&h=450";
-    } catch {
-      return "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&q=80&w=450&h=450";
-    }
-  });
-
-  const [aliceImageUrl, setAliceImageUrl] = useState(() => {
-    try {
-      return localStorage.getItem("user_alice_image_url") || "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=450&h=450";
-    } catch {
-      return "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=450&h=450";
-    }
-  });
-
-  const [rinImgBroken, setRinImgBroken] = useState(false);
-  const [aliceImgBroken, setAliceImgBroken] = useState(false);
-
   // Real-time detailed logs stream for transparent PDF parsing
   const [liveLogs, setLiveLogs] = useState<{ id: string; msg: string; type: "info" | "success" | "work" | "warning"; time: string }[]>([]);
-
-  const thoughtsBySubject = {
-    Physics: [
-      "Compiling radioactive decay kinematics...",
-      "Converting electromagnetic vector field symbols...",
-      "Formulating circular motion angular velocity equations...",
-      "Drafting detailed mechanics work-energy explanations...",
-      "Confirming friction coefficients are perfectly aligned with NTA standards.",
-      "Applying vector cross product integrations... Success!",
-      "Translating complex coordinate pulleys into dynamic mathematical nodes."
-    ],
-    Chemistry: [
-      "Organizing Benzene-ring organic substitution mechanism logs...",
-      "Checking periodic trends for electronegative stability limits...",
-      "Verifying Gibbs free energy calculations for correctness...",
-      "Polishing IUPAC nomenclature spelling for coordinate compounds...",
-      "Resolving molecular kinetics half-life reaction rates...",
-      "Parsing chemical gas equilibria coefficients: Kp and Kc values...",
-      "Isolating stoichiometry atomic mass ratios... Match found!"
-    ],
-    Mathematics: [
-      "Unpacking double-integration definite calculus bounds...",
-      "Converting 3-dimensional vector direction cosines to display LaTeX...",
-      "Verifying binomial sequence coefficient expansions...",
-      "Translating trigonometric identity functions with high-precision ratios...",
-      "Deducing limits-continuity differentiability bounds...",
-      "Assembling coordinate matrix determinant column vectors...",
-      "Formatting conic section tangents and hyperbola equations."
-    ]
-  };
-
-  const [subjectProgress, setSubjectProgress] = useState<{
-    Physics: "idle" | "running" | "done" | "empty" | "error";
-    Chemistry: "idle" | "running" | "done" | "empty" | "error";
-    Mathematics: "idle" | "running" | "done" | "empty" | "error";
-  }>({
-    Physics: "idle",
-    Chemistry: "idle",
-    Mathematics: "idle",
-  });
-
-  const [subjectPercent, setSubjectPercent] = useState<Record<string, number>>({
-    Physics: 0,
-    Chemistry: 0,
-    Mathematics: 0,
-  });
-
-  const [isMappingLayout, setIsMappingLayout] = useState(false);
-
-  const [extractedCount, setExtractedCount] = useState<{
-    Physics: number;
-    Chemistry: number;
-    Mathematics: number;
-  }>({ Physics: 0, Chemistry: 0, Mathematics: 0 });
-
-  const [aliceAction, setAliceAction] = useState<"cheering" | "ramen" | "sleeping" | "boba" | "peace">("cheering");
-  const [aliceDialogue, setAliceDialogue] = useState("Let's do this, Rin-chan! We're hand-crafting a gorgeous mock test! ✨");
-  const [rinDialogue, setRinDialogue] = useState("Calibrated coordinates. Ready to convert PDF layout grids.");
 
   const [serverConfig, setServerConfig] = useState<{
     geminiConfigured: boolean;
@@ -322,46 +188,10 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
       .catch((err) => console.warn("Failed checking API health status:", err));
   }, []);
 
-  useEffect(() => {
-    if (!isLoading) {
-      setRinDialogue("Calibrated coordinates. Ready to convert PDF layout grids.");
-      setAliceDialogue("Let's do this, Rin-chan! We're hand-crafting a gorgeous mock test! ✨");
-      setAliceAction("cheering");
-      return;
-    }
-
-    const timer = setInterval(() => {
-      // Determine active subject
-      let activeSubj: "Physics" | "Chemistry" | "Mathematics" | "idle" = "idle";
-      if (subjectProgress.Physics === "running") activeSubj = "Physics";
-      else if (subjectProgress.Chemistry === "running") activeSubj = "Chemistry";
-      else if (subjectProgress.Mathematics === "running") activeSubj = "Mathematics";
-
-      // 1. Pick Alice random action
-      const actions: ("cheering" | "ramen" | "sleeping" | "boba" | "peace")[] = ["cheering", "ramen", "sleeping", "boba", "peace"];
-      const nextAction = actions[Math.floor(Math.random() * actions.length)];
-      setAliceAction(nextAction);
-
-      // 2. Pick Alice dialogue matching her new action
-      const aPool = ALICE_DIALOGUE_POOL[nextAction];
-      const nextAliceDial = aPool[Math.floor(Math.random() * aPool.length)];
-      setAliceDialogue(nextAliceDial);
-
-      // 3. Pick Rin dialogue matching active subject
-      const rPool = RIN_DIALOGUE_POOL[activeSubj];
-      const nextRinDial = rPool[Math.floor(Math.random() * rPool.length)];
-      setRinDialogue(nextRinDial);
-    }, 3800);
-
-    return () => clearInterval(timer);
-  }, [isLoading, subjectProgress.Physics, subjectProgress.Chemistry, subjectProgress.Mathematics]);
-
   const handleSaveApiKey = () => {
     try {
       localStorage.setItem("user_gemini_api_key", apiKeys.gemini.trim());
       localStorage.setItem("user_groq_api_key", apiKeys.groq.trim());
-      localStorage.setItem("user_rin_image_url", rinImageUrl.trim());
-      localStorage.setItem("user_alice_image_url", aliceImageUrl.trim());
       setSaveStatus("saved");
       
       // If the user enters a non-empty API Key, launch the celebratory benefits pop-up!
@@ -379,11 +209,7 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
     try {
       localStorage.removeItem("user_gemini_api_key");
       localStorage.removeItem("user_groq_api_key");
-      localStorage.removeItem("user_rin_image_url");
-      localStorage.removeItem("user_alice_image_url");
       setApiKeys({ gemini: "", groq: "" });
-      setRinImageUrl("https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&q=80&w=450&h=450");
-      setAliceImageUrl("https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=450&h=450");
       setSaveStatus("cleared");
       setTimeout(() => setSaveStatus("idle"), 3500);
     } catch (e) {
@@ -1470,43 +1296,7 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
                   </div>
                 </div>
 
-                {/* Avatar Customization Block */}
-                <div className="pt-3 border-t border-slate-200 space-y-3">
-                  <h4 className="font-bold text-slate-800 text-xs flex items-center gap-1.5 select-none text-left">
-                    <span>🌸</span>
-                    <span>Customize Live Anime Parsing Companions</span>
-                  </h4>
-                  <p className="text-slate-505 text-[11px] leading-relaxed select-none text-left">
-                    Give customized personal face details to our compiler study space! Paste any high-resolution image URL to instantly custom render Rin-chan and Alice-chan.
-                  </p>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                    <div className="space-y-1 text-left">
-                      <label className="block text-[11px] font-bold text-slate-600 flex items-center gap-1">
-                        <span>🧠</span> Rin (Black Hair/Dev) URL:
-                      </label>
-                      <input
-                        type="text"
-                        value={rinImageUrl}
-                        onChange={(e) => setRinImageUrl(e.target.value)}
-                        placeholder="Paste image web address (https://...)"
-                        className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-[11px] focus:ring-1 focus:ring-blue-500 focus:outline-hidden text-slate-700 bg-white"
-                      />
-                    </div>
-                    <div className="space-y-1 text-left">
-                      <label className="block text-[11px] font-bold text-slate-600 flex items-center gap-1">
-                        <span>📣</span> Alice (Blonde Hair/AI) URL:
-                      </label>
-                      <input
-                        type="text"
-                        value={aliceImageUrl}
-                        onChange={(e) => setAliceImageUrl(e.target.value)}
-                        placeholder="Paste image web address (https://...)"
-                        className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md text-[11px] focus:ring-1 focus:ring-blue-500 focus:outline-hidden text-slate-700 bg-white"
-                      />
-                    </div>
-                  </div>
-                </div>
 
                 {/* Save and Reset Commands */}
                 <div className="flex gap-2 justify-end pt-3 border-t border-slate-100">
@@ -1602,105 +1392,69 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
           <div className="absolute top-0 left-1/4 w-72 h-72 bg-amber-500/5 rounded-full blur-[100px] pointer-events-none" />
           <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-rose-500/5 rounded-full blur-[100px] pointer-events-none" />
 
-          {/* Cute header layout */}
+          {/* Clean Professional Header */}
           <div className="flex flex-col items-center mb-6">
-            <div className="text-[10px] font-black text-rose-500 uppercase tracking-widest bg-rose-50 border border-rose-100 px-3 py-1 rounded-full animate-pulse flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
-              Cozy AI Study Room (Parsing in Progress...)
+            <div className="text-[10px] font-bold text-blue-700 uppercase tracking-widest bg-blue-50 border border-blue-200/80 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping" />
+              <span>Multi-Subject Extraction Engine Active</span>
             </div>
-            
-            {/* Dynamic In-App Warning Banner - matches exact user requirements */}
-            {parsedPaperCount >= 2 && (
-              <div className="mt-3 w-full max-w-lg p-3 bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 text-white rounded-xl shadow-md text-xs font-bold text-center border border-amber-300 animate-pulse relative overflow-hidden">
-                📢 You've parsed 2 mocks! you should continue practicing, by credits now pakages are limited
-              </div>
-            )}
 
-            <h3 className="text-base font-black text-slate-800 tracking-tight mt-2 flex items-center gap-1.5">
-              <span>🌸</span> Live Test Compiler Room <span>🌸</span>
+            <h3 className="text-lg font-black text-slate-900 tracking-tight mt-2 flex items-center gap-2">
+              <span>Compiling Mock Examination</span>
             </h3>
-            <p className="text-[11px] text-slate-400 mt-0.5 max-w-sm">
-              Rin is compiling the mock paper with Gemini AI while Alice keeps her company!
+            <p className="text-xs text-slate-500 mt-0.5 max-w-md text-center">
+              Gemini AI is parsing questions, mathematical equations, and Section A/B structures.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch text-left">
-            {/* LEFT SIDE: Chat dialogue room (lg:col-span-6) */}
-            <div className="lg:col-span-7 bg-white/40 border border-slate-100 rounded-2xl p-4 md:p-5 flex flex-col justify-between min-h-[320px] space-y-4 shadow-xs">
-              
-              <div className="text-[10px] font-black text-indigo-600 uppercase tracking-widest border-b border-indigo-100/50 pb-1.5 mb-1 select-none">
-                💬 AI Compiler Banter chat
+            {/* LEFT SIDE: Extraction Pipeline Telemetry */}
+            <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between min-h-[320px] space-y-4 shadow-xs">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    Pipeline Telemetry
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-400">
+                  Target: 75 Questions (NTA Pattern)
+                </span>
               </div>
 
-              {/* REAL-TIME MINI COMIC DIALOGUE FEED */}
-              <div className="flex-1 flex flex-col justify-center space-y-4 py-1 select-text">
-                
-                {/* 1. Rin Dialogue (Interactive) */}
-                <div className="flex gap-3 items-start select-text">
-                  <div className="shrink-0 flex flex-col items-center select-none">
-                    <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden shadow-xs relative">
-                      {/* Stylized dark-hair chibi avatar */}
-                      <svg viewBox="0 0 35 35" className="w-full h-full">
-                        <circle cx="17.5" cy="17.5" r="16" fill="#1e293b" />
-                        <circle cx="17.5" cy="19.5" r="9.5" fill="#ffe4e6" />
-                        {/* hair */}
-                        <path d="M 7,12 Q 17.5,3 28,12 Q 26,16 17.5,13 Q 9,16 7,12" fill="#1e293b" />
-                        <circle cx="14" cy="19" r="1.8" fill="#1d4ed8" />
-                        <circle cx="21" cy="19" r="1.8" fill="#1d4ed8" />
-                        <path d="M 16,24 Q 17.5,25.5 19,24" stroke="#ea580c" strokeWidth="0.8" fill="none" />
-                      </svg>
-                      {/* Active typing dot badge */}
-                      <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-blue-500 rounded-full border border-slate-900 animate-ping" />
-                      <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-blue-400 rounded-full border border-slate-900" />
-                    </div>
-                    <span className="text-[8px] font-black text-slate-500 mt-1 uppercase tracking-tight">Rin (Dev)</span>
-                  </div>
-                  
-                  <div className="flex-1 bg-sky-50 border border-sky-100/80 text-left relative p-2.5 rounded-2xl rounded-tl-sm text-[11px] leading-relaxed text-slate-700 shadow-xs">
-                    {/* Tail */}
-                    <div className="absolute left-0 top-3 w-1.5 h-1.5 bg-sky-50 border-l border-b border-sky-100 rotate-45 -translate-x-[4.5px]" />
-                    <span className="text-[8px] font-black text-sky-600 block mb-0.5 uppercase tracking-wider">⚡ SECTION EXTRACTOR ACTION</span>
-                    <p className="font-bold text-slate-800 font-sans">{rinDialogue}</p>
-                  </div>
+              {/* Status information cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 my-auto">
+                <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Current Step</span>
+                  <p className="text-xs font-bold text-slate-800 truncate" title={loadingStep}>
+                    {loadingStep.replace("...", "")}
+                  </p>
                 </div>
 
-                {/* 2. Alice Dialogue (Randomized) */}
-                <div className="flex gap-3 items-start flex-row-reverse select-text">
-                  <div className="shrink-0 flex flex-col items-center select-none">
-                    <div className="w-9 h-9 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center overflow-hidden shadow-xs relative">
-                      {/* Stylized blonde chibi avatar */}
-                      <svg viewBox="0 0 35 35" className="w-full h-full">
-                        <circle cx="17.5" cy="17.5" r="16" fill="#fef08a" />
-                        <circle cx="17.5" cy="19.5" r="9.5" fill="#fff1f2" />
-                        <path d="M 7,12 Q 17.5,3 28,12 Q 26,15 17.5,13.5 Q 9,15 7,12" fill="#fde047" />
-                        <circle cx="14" cy="19" r="1.8" fill="#0891b2" />
-                        <circle cx="21" cy="19" r="1.8" fill="#0891b2" />
-                        <path d="M 16,24 Q 17.5,25.5 19,24" stroke="#db2777" strokeWidth="1" fill="none" />
-                      </svg>
-                      {/* Active icon badge */}
-                      <span className="absolute -bottom-0.5 -right-0.5 text-[9px] drop-shadow-xs select-none">
-                        {aliceAction === "ramen" ? "🍜" :
-                         aliceAction === "sleeping" ? "😴" :
-                         aliceAction === "boba" ? "🧋" :
-                         aliceAction === "peace" ? "✌️" : "📣"}
-                      </span>
-                    </div>
-                    <span className="text-[8px] font-black text-amber-600 mt-1 uppercase tracking-tight">Alice (AI)</span>
-                  </div>
-                  
-                  <div className="flex-1 bg-amber-50/70 border border-amber-100 text-left relative p-2.5 rounded-2xl rounded-tr-sm text-[11px] leading-relaxed text-slate-700 shadow-xs">
-                    {/* Tail */}
-                    <div className="absolute right-0 top-3 w-1.5 h-1.5 bg-amber-50/70 border-r border-t border-amber-100 rotate-45 translate-x-[4.5px]" />
-                    <span className="text-[8px] font-black text-amber-500 block mb-0.5 uppercase tracking-wider">🌸 COMPANION CHAT</span>
-                    <p className="font-semibold text-slate-800 italic">"{aliceDialogue}"</p>
-                  </div>
+                <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">LaTeX Engine</span>
+                  <p className="text-xs font-bold text-emerald-700 flex items-center gap-1">
+                    <span>✓</span> KaTeX Compatible
+                  </p>
                 </div>
 
+                <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Extracted</span>
+                  <p className="text-xs font-bold text-blue-700 font-mono">
+                    {extractedCount.Physics + extractedCount.Chemistry + extractedCount.Mathematics} Questions
+                  </p>
+                </div>
               </div>
 
-              {/* Status footer */}
-              <div className="text-[9px] text-slate-400 select-none">
-                💡 Mini dialogues update reactively in real-time as sections are processed.
+              {/* Real-time active focus note */}
+              <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl text-xs text-blue-900 leading-relaxed font-medium">
+                <div className="flex items-center gap-1.5 font-bold mb-0.5">
+                  <Sparkles size={12} className="text-blue-600" />
+                  <span>NTA Question Calibration</span>
+                </div>
+                <span>
+                  Equations and diagrams are verified against standard JEE Main MCQ (Single Choice) and NAT (Numerical Value) criteria.
+                </span>
               </div>
             </div>
 
