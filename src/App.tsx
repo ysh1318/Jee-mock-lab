@@ -409,36 +409,8 @@ export default function App() {
               </div>
             </div>
 
-            {/* COMPACT MIDDLE SHARE ENCOURAGEMENT */}
-            <div className="hidden md:flex items-center gap-2 bg-slate-900/30 px-3 py-1 rounded-full border border-slate-700/40">
-              <span className="text-[10px] text-slate-300 font-medium">Love this free app?</span>
-              <button
-                type="button"
-                onClick={() => {
-                  const shareData = {
-                    title: 'JEE CBT Mock Test Simulator',
-                    text: 'Practice any offline JEE mock exam PDF inside a real CBT interface with AI solver!',
-                    url: window.location.origin
-                  };
-                  if (navigator.share) {
-                    navigator.share(shareData).catch(() => {});
-                  } else {
-                    try {
-                      navigator.clipboard.writeText(window.location.origin);
-                      setShareCopied(true);
-                      setTimeout(() => setShareCopied(false), 2000);
-                    } catch {}
-                  }
-                }}
-                className="bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-extrabold text-[9px] sm:text-[10px] px-2.5 py-0.5 rounded-full cursor-pointer transition-all shadow-xs flex items-center gap-1"
-              >
-                <span>📢</span>
-                <span>{shareCopied ? "Link Copied!" : "Spread Word"}</span>
-              </button>
-            </div>
-
             {/* Header Rightside controls */}
-            <div className="flex items-center gap-1.5 shrink-0 text-[10px] sm:text-[11px] font-semibold text-slate-200">
+            <div className="flex items-center gap-2 shrink-0 text-[10px] sm:text-[11px] font-semibold text-slate-200">
               {/* Admin Panel Button */}
               {userAccount && userAccount.role === "admin" && (
                 <button
@@ -446,12 +418,12 @@ export default function App() {
                   onClick={() => {
                     setStep("ADMIN");
                   }}
-                  className="px-2 py-1 sm:px-2.5 bg-rose-600 hover:bg-rose-500 border border-rose-500/40 hover:border-rose-450 text-white rounded text-[9px] sm:text-[10px] font-extrabold cursor-pointer transition-all flex items-center gap-1 shadow-sm active:scale-95 duration-100 mr-0.5 whitespace-nowrap"
-                  title="Open Admin Desk Control Tower Dashboard"
+                  className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 border border-rose-500/40 text-white rounded text-[10px] font-extrabold cursor-pointer transition-all flex items-center gap-1 shadow-sm active:scale-95 whitespace-nowrap"
+                  title="Open Admin Control Hub"
                   id="header_admin_panel_btn"
                 >
                   <span className="animate-pulse">🛡️</span>
-                  <span>Admin Panel</span>
+                  <span>Admin Hub</span>
                 </button>
               )}
 
@@ -462,8 +434,8 @@ export default function App() {
                   setWalletModalTab(userAccount?.role === "admin" ? "wallet" : undefined);
                   setShowWalletModal(true);
                 }}
-                className="px-2 py-1 sm:px-2.5 bg-sky-650 hover:bg-sky-550 border border-sky-500/30 hover:border-sky-500/50 text-white rounded text-[9px] sm:text-[10px] font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm active:scale-95 duration-100 shadow-xs"
-                title="Manage mock parsing credits, scan-to-pay UPI, view logs"
+                className="px-2.5 py-1 bg-sky-650 hover:bg-sky-550 border border-sky-500/40 text-white rounded text-[10px] sm:text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+                title="Manage mock parsing credits and account"
                 id="header_wallet_chip"
               >
                 <span className="text-amber-300">🪙</span>
@@ -479,50 +451,21 @@ export default function App() {
               <button
                 type="button"
                 onClick={toggleFullscreen}
-                className="px-2 py-1 sm:px-2.5 bg-slate-850/80 hover:bg-slate-750 border border-slate-700/80 hover:border-slate-500 text-slate-200 hover:text-white rounded text-[9px] sm:text-[10px] font-bold cursor-pointer transition-all flex items-center gap-1 shadow-xs"
-                title={isFullscreen ? "Exit Fullscreen Mode" : "Enter Authentic Fullscreen Mode"}
+                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 hover:text-white rounded text-[10px] sm:text-xs font-bold cursor-pointer transition-all flex items-center gap-1 shadow-xs"
+                title={isFullscreen ? "Exit Fullscreen Mode" : "Enter Fullscreen Mode"}
               >
-                {isFullscreen ? <Minimize size={10} className="text-amber-400" /> : <Maximize size={10} />}
-                <span className="hidden sm:inline">{isFullscreen ? "Default" : "🖥️ Fullscreen"}</span>
+                {isFullscreen ? <Minimize size={12} className="text-amber-400" /> : <Maximize size={12} />}
+                <span className="hidden sm:inline">{isFullscreen ? "Windowed" : "Fullscreen"}</span>
               </button>
 
+              {/* Safe Wipe Cache */}
               <button
                 onClick={() => setShowSelfDestructConfirm(true)}
-                className="px-2 py-1 sm:px-2.5 bg-red-650/15 hover:bg-red-600/35 border border-red-500/30 hover:border-red-500/50 text-red-100 hover:text-white rounded text-[9px] sm:text-[10px] font-bold cursor-pointer transition-all flex items-center gap-1 shadow-inner"
-                title="Wipe keys and cached tests"
+                className="px-2.5 py-1 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-200 hover:text-white rounded text-[10px] sm:text-xs font-bold cursor-pointer transition-all flex items-center gap-1"
+                title="Clear cached test storage"
               >
-                <span>🧹 <span className="hidden sm:inline">Safe Wipe</span></span>
+                <span>🧹 <span className="hidden sm:inline">Clear Cache</span></span>
               </button>
-
-              <div className="hidden lg:flex items-center gap-1 opacity-90 bg-slate-900/40 border border-slate-700/40 px-2 py-0.5 rounded text-[10px] text-blue-200 font-mono">
-                <Sparkles size={11} className="text-amber-300 animate-pulse shrink-0" />
-                <span>Full Stack API</span>
-              </div>
-
-              {/* Creator badge */}
-              <div className="hidden md:flex items-center gap-1.5 ml-1">
-                <a
-                  href="https://www.instagram.com/break_thegrid/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-black/90 hover:bg-black border border-slate-805 rounded px-1.5 py-0.5 shadow-xs flex items-center gap-1 transition-all duration-250 cursor-pointer text-[9.5px]/none"
-                  title="Visit creator's Instagram"
-                >
-                  <div 
-                    className="w-3.5 h-3.5 bg-slate-950 border border-slate-900 rounded-sm flex items-center justify-center font-black text-[4.5px]"
-                    style={{
-                      backgroundImage: `
-                        linear-gradient(rgba(220, 38, 38, 0.1) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(220, 38, 38, 0.1) 1px, transparent 1px)
-                      `,
-                      backgroundSize: "2px 2px"
-                    }}
-                  >
-                    <span className="text-red-500 scale-[0.9]">BG</span>
-                  </div>
-                  <span className="font-extrabold text-slate-100 leading-none">BREAK THE GRID</span>
-                </a>
-              </div>
             </div>
           </header>
 

@@ -127,58 +127,30 @@ export function LandingPage({ onEnterPlatform, savedPapersCount, attemptsCount, 
           </div>
         </div>
 
-        {/* COMPACT MIDDLE SHARE ENCOURAGEMENT */}
-        <div className="hidden md:flex items-center gap-2 bg-slate-900/30 px-3 py-1 rounded-full border border-slate-700/40">
-          <span className="text-[10px] text-slate-305 font-medium">Love this free app?</span>
-          <button
-            type="button"
-            onClick={() => {
-              const shareData = {
-                title: 'JEE CBT Mock Test Simulator',
-                text: 'Practice any offline JEE mock exam PDF inside a real CBT interface with AI solver!',
-                url: window.location.origin
-              };
-              if (navigator.share) {
-                navigator.share(shareData).catch(() => {});
-              } else {
-                try {
-                  navigator.clipboard.writeText(window.location.origin);
-                  setShareCopied(true);
-                  setTimeout(() => setShareCopied(false), 2000);
-                } catch {}
-              }
-            }}
-            className="bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-extrabold text-[9px] sm:text-[10px] px-2.5 py-0.5 rounded-full cursor-pointer transition-all shadow-xs flex items-center gap-1"
-          >
-            <span>📢</span>
-            <span>{shareCopied ? "Link Copied!" : "Spread Word"}</span>
-          </button>
-        </div>
-
         {/* Action controls */}
-        <div className="flex items-center gap-1.5 shrink-0 text-[10px] sm:text-[11px] font-semibold text-slate-200">
+        <div className="flex items-center gap-2 shrink-0 text-[10px] sm:text-[11px] font-semibold text-slate-200">
           <button
             type="button"
             onClick={toggleFullscreen}
-            className="px-2 py-1 bg-slate-850/80 hover:bg-slate-755 border border-slate-700/80 hover:border-slate-500 text-slate-200 hover:text-white rounded text-[9px] sm:text-[10px] font-bold cursor-pointer transition-all flex items-center gap-1 shadow-xs shrink-0"
+            className="px-2.5 py-1 bg-slate-800/80 hover:bg-slate-700 border border-slate-650 text-slate-200 hover:text-white rounded text-[10px] sm:text-xs font-bold cursor-pointer transition-all flex items-center gap-1 shadow-xs shrink-0"
             title={isFullscreen ? "Exit Fullscreen" : "Enter Authentic Fullscreen Mode"}
           >
-            {isFullscreen ? <Minimize size={10} className="text-amber-400" /> : <Maximize size={10} />}
-            <span className="hidden sm:inline">{isFullscreen ? "Default" : "🖥️ Fullscreen"}</span>
+            {isFullscreen ? <Minimize size={12} className="text-amber-400" /> : <Maximize size={12} />}
+            <span className="hidden sm:inline">{isFullscreen ? "Windowed" : "Fullscreen"}</span>
           </button>
 
           {savedPapersCount > 0 && (
-            <span className="hidden lg:inline-flex items-center gap-1 bg-emerald-605 text-emerald-300 border border-emerald-500/30 text-[9.5px] font-bold font-mono uppercase tracking-wider px-2 py-0.5 rounded">
+            <span className="hidden lg:inline-flex items-center gap-1 bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold font-mono uppercase tracking-wider px-2.5 py-1 rounded">
               📚 Saved: {savedPapersCount}
             </span>
           )}
 
           <button
             onClick={() => onEnterPlatform("UPLOAD")}
-            className="px-2.5 py-1 sm:px-3.5 sm:py-1 bg-blue-600 hover:bg-blue-500 text-white font-black text-[10px] sm:text-xs rounded shadow-md shadow-blue-500/10 cursor-pointer transition flex items-center gap-1 hover:scale-[1.01] active:scale-95 shrink-0"
+            className="px-3.5 py-1 bg-blue-600 hover:bg-blue-500 text-white font-black text-[10px] sm:text-xs rounded shadow-md shadow-blue-500/10 cursor-pointer transition flex items-center gap-1.5 hover:scale-[1.01] active:scale-95 shrink-0"
           >
-            <span>Launch</span>
-            <ArrowRight size={11} className="hidden sm:inline shrink-0" />
+            <span>Launch Exam</span>
+            <ArrowRight size={12} className="shrink-0" />
           </button>
         </div>
       </header>
