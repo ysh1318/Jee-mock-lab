@@ -394,15 +394,15 @@ export function PredictorHub({ completedAttempts, onSelectAttempt, savedPapersCo
       <div className="border-b border-slate-200 pb-6 mb-8 text-left">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-2 text-indigo-700 font-bold text-xs uppercase tracking-wider font-mono">
-              <Award size={16} />
-              <span>JoSAA Simulated Counseling Hub</span>
+            <div className="flex items-center gap-2 mb-2 text-[#1a3a5f] font-bold text-xs uppercase tracking-wider font-mono">
+              <Award size={15} />
+              <span>JoSAA Counseling & College Predictor</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
               JEE Main Rank Predictor & College Selector
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-4xl font-medium">
-              Calibrated mapping software for the June 2026 JEE examinations. Check simulated percentiles, CRL merit ranks, and model-matched seat allocations across {COLLEGES.length} engineering institutions based on historical JoSAA data.
+              Explore estimated percentiles, CRL ranks, and seat allocations across {COLLEGES.length} engineering institutions based on official JoSAA closing ranks.
             </p>
           </div>
           

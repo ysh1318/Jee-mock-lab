@@ -168,15 +168,15 @@ export function LandingPage({ onEnterPlatform, savedPapersCount, attemptsCount, 
           className="max-w-4xl mx-auto text-center space-y-6 relative z-10 flex flex-col items-center"
         >
           
-          {/* Centered Hero Content */}
+          {/* Centered Hero Badge */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.15, duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-blue-500/10 text-blue-300 border border-blue-500/30 text-[10.5px] font-mono font-bold uppercase tracking-widest px-3 py-1 rounded-full"
+            className="inline-flex items-center gap-2 bg-blue-500/10 text-blue-300 border border-blue-500/30 text-xs font-semibold px-3.5 py-1 rounded-full"
           >
-            <Sparkles size={12} className="text-amber-300 animate-pulse" />
-            <span>PDF-To-Mock Entrance Vector Engine</span>
+            <Sparkles size={13} className="text-blue-300" />
+            <span>AI-Powered JEE Mock Testing Platform</span>
           </motion.div>
  
           <motion.h2 
@@ -185,9 +185,9 @@ export function LandingPage({ onEnterPlatform, savedPapersCount, attemptsCount, 
             transition={{ delay: 0.1, duration: 0.6 }}
             className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight text-white font-sans max-w-3xl mx-auto"
           >
-            Transform Scanned Mock PDFs <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
-              Into Interactive CBT Exams
+            Turn Any JEE Mock PDF <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-emerald-400">
+              Into an Interactive CBT Exam
             </span>
           </motion.h2>
  
@@ -195,29 +195,29 @@ export function LandingPage({ onEnterPlatform, savedPapersCount, attemptsCount, 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
-            className="text-xs sm:text-sm text-slate-350 leading-relaxed max-w-2xl mx-auto font-medium"
+            className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl mx-auto font-normal"
           >
-            Maximize your Rank & Percentile calibration. Upload any mock PDF from premier coaching networks and experience our precise server-side parsed, cloud-synced exam dashboard designed to replicate original NTA CBT rules.
+            Upload your coaching booklets, past year papers, or custom test sets. Our engine parses questions, diagrams, and LaTeX equations into an authentic full-screen CBT testing interface in seconds.
           </motion.p>
  
-          {/* Centered micro disclaimers */}
+          {/* Centered feature highlights */}
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.6 }}
-            className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[10.5px] font-mono font-semibold text-slate-400 pt-2"
+            className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs font-medium text-slate-400 pt-2"
           >
             <span className="flex items-center gap-1.5">
-              <ShieldCheck size={12} className="text-emerald-500" />
-              <span>NTA Rule Validation Grid</span>
+              <ShieldCheck size={14} className="text-emerald-400" />
+              <span>Standard NTA Scoring (+4 / -1)</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <Lock size={12} className="text-blue-500" />
-              <span>Zero Exposure Key Safe</span>
+              <Lock size={14} className="text-blue-400" />
+              <span>Private & Client-Side Stored</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <FileCheck size={12} className="text-blue-400" />
-              <span>LaTeX Calculus Layouts</span>
+              <FileCheck size={14} className="text-indigo-400" />
+              <span>LaTeX Math & Formula Rendering</span>
             </span>
           </motion.div>
  
@@ -564,68 +564,68 @@ export function LandingPage({ onEnterPlatform, savedPapersCount, attemptsCount, 
             {/* Testimonial 1 */}
             <div className="bg-slate-950/55 border border-slate-850 hover:border-slate-750 p-6 rounded-2xl flex flex-col justify-between space-y-6 transition duration-200">
               <div className="space-y-4">
-                <div className="flex gap-1 animate-pulse">
+                <div className="flex gap-1">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={15} className="fill-amber-400 text-amber-400" />
+                    <Star key={i} size={14} className="fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed font-semibold font-sans">
-                  "My coaching booklets in Physics (especially rotation/coordinate systems) were dry. I dragged my Allen test PDFs in here and simulated the exam. practicing on NTA's identical color palette cured my actual panel anxiety."
+                <p className="text-xs text-slate-300 leading-relaxed font-normal">
+                  "My coaching booklets in Physics were static and dry. Dragging mock PDFs in here and practicing under authentic full-screen CBT conditions completely eliminated my exam-day panel anxiety."
                 </p>
               </div>
-              <div className="border-t border-slate-900/60 pt-4 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-blue-900/40 border border-blue-500/30 flex items-center justify-center text-xs font-black text-blue-300 font-mono">
+              <div className="border-t border-slate-900 pt-4 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-blue-900/40 border border-blue-500/30 flex items-center justify-center text-xs font-bold text-blue-300 font-mono">
                   AM
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-slate-100 block font-heading font-semibold">Aryan Mehta</span>
-                  <span className="text-[10px] text-slate-500 font-mono">FIITJEE Regular Student</span>
+                  <span className="text-xs font-bold text-slate-100 block">Aryan Mehta</span>
+                  <span className="text-[11px] text-slate-500">JEE 2026 Aspirant</span>
                 </div>
               </div>
             </div>
 
             {/* Testimonial 2 */}
-            <div className="bg-slate-950/55 border border-slate-850 hover:border-slate-750 p-6 rounded-2xl flex flex-col justify-between space-y-6 transition duration-200">
+            <div className="bg-slate-950/60 border border-slate-800 p-6 rounded-2xl flex flex-col justify-between space-y-6">
               <div className="space-y-4">
-                <div className="flex gap-1 animate-pulse">
+                <div className="flex gap-1">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={15} className="fill-amber-400 text-amber-400" />
+                    <Star key={i} size={14} className="fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed font-semibold font-sans">
-                  "Usually AI engines completely mess up math symbols or physical systems in chemistry. The LaTeX formulas mapped elegantly. Finding sub-topic weak centers in calculus catapulted my scores by +36 marks."
+                <p className="text-xs text-slate-300 leading-relaxed font-normal">
+                  "Usually OCR engines mess up math symbols or subscripts in organic chemistry. The KaTeX formula rendering here mapped flawlessly, and chapter-wise analytics helped target my weak areas."
                 </p>
               </div>
-              <div className="border-t border-slate-900/60 pt-4 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-emerald-900/40 border border-emerald-500/30 flex items-center justify-center text-xs font-black text-emerald-300 font-mono">
+              <div className="border-t border-slate-900 pt-4 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-900/40 border border-emerald-500/30 flex items-center justify-center text-xs font-bold text-emerald-300 font-mono">
                   PI
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-slate-100 block font-heading font-semibold">Prisha Iyer</span>
-                  <span className="text-[10px] text-slate-500 font-mono">Resonance Regular Student</span>
+                  <span className="text-xs font-bold text-slate-100 block">Prisha Iyer</span>
+                  <span className="text-[11px] text-slate-500">JEE 2026 Aspirant</span>
                 </div>
               </div>
             </div>
 
             {/* Testimonial 3 */}
-            <div className="bg-slate-950/55 border border-slate-850 hover:border-slate-750 p-6 rounded-2xl flex flex-col justify-between space-y-6 transition duration-200">
+            <div className="bg-slate-950/60 border border-slate-800 p-6 rounded-2xl flex flex-col justify-between space-y-6">
               <div className="space-y-4">
-                <div className="flex gap-1 animate-pulse">
+                <div className="flex gap-1">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={15} className="fill-amber-400 text-amber-400" />
+                    <Star key={i} size={14} className="fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed font-semibold font-sans">
-                  "Having instant LaTeX step explanation feedback saved me so much time. I was struggling with physical chemistry timings, but simulating 10 full test sheets on this CBT board boosted my speed drastically."
+                <p className="text-xs text-slate-300 leading-relaxed font-normal">
+                  "Instant chapter-level scorecards and time-budgeting insights saved hours after every mock test. The interface is distraction-free, reliable, and exactly matches the actual exam palette."
                 </p>
               </div>
-              <div className="border-t border-slate-900/60 pt-4 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-purple-900/40 border border-purple-500/30 flex items-center justify-center text-xs font-black text-purple-300 font-mono">
+              <div className="border-t border-slate-900 pt-4 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-purple-900/40 border border-purple-500/30 flex items-center justify-center text-xs font-bold text-purple-300 font-mono">
                   YS
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-slate-100 block font-heading font-semibold">Yuvraj Singh</span>
-                  <span className="text-[10px] text-slate-500 font-mono">Self-Study Aspirant</span>
+                  <span className="text-xs font-bold text-slate-100 block">Yuvraj Singh</span>
+                  <span className="text-[11px] text-slate-500">Self-Study Aspirant</span>
                 </div>
               </div>
             </div>

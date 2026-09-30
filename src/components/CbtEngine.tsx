@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
-import { Clock, User, Eye, Info, HelpCircle, GraduationCap, ChevronLeft, ChevronRight, AlertTriangle, Send, Maximize, Minimize } from "lucide-react";
+import { Clock, User, Eye, Info, HelpCircle, GraduationCap, ChevronLeft, ChevronRight, AlertTriangle, Send, Maximize, Minimize, Keyboard, Layers } from "lucide-react";
 import { Question, Subject, Section, QuestionStatus, TestState } from "../types";
 import { MarkdownMath } from "./MathText";
 import { VirtualKeyboard } from "./VirtualKeyboard";
@@ -609,51 +609,52 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
           })}
         </div>
 
-        <div className="flex gap-1 items-center shrink-0">
-          <button
-            onClick={() => setModalType("instructions")}
-            className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 text-[8px] sm:text-[10px] rounded shadow-xs font-bold transition flex items-center gap-0.5 sm:gap-1 cursor-pointer uppercase"
-          >
-            <Info size={10} />
-            <span className="hidden sm:inline">Instructions</span>
-          </button>
-          <button
-            onClick={() => setModalType("questionPaper")}
-            className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 text-[8px] sm:text-[10px] rounded shadow-xs font-bold transition flex items-center gap-0.5 sm:gap-1 cursor-pointer uppercase"
-          >
-            <Eye size={10} />
-            <span>Q Paper</span>
-          </button>
-        </div>
-      </nav>
+          <div className="flex gap-1.5 items-center shrink-0">
+            <button
+              onClick={() => setModalType("instructions")}
+              className="px-2.5 py-1 border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 text-[11px] rounded shadow-xs font-semibold transition flex items-center gap-1 cursor-pointer"
+            >
+              <Info size={12} />
+              <span className="hidden sm:inline">Instructions</span>
+            </button>
+            <button
+              onClick={() => setModalType("questionPaper")}
+              className="px-2.5 py-1 border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 text-[11px] rounded shadow-xs font-semibold transition flex items-center gap-1 cursor-pointer"
+            >
+              <Eye size={12} />
+              <span>Question Paper</span>
+            </button>
+          </div>
+        </nav>
 
-      {/* -------------------- WORKSPACE WRAPPER -------------------- */}
-      <div className="flex-1 flex overflow-hidden bg-white">
-        {/* ==================== LEFT AREA (QUESTIONS & RESPONSES) ==================== */}
-        <div className="flex-1 flex flex-col bg-slate-50 border-r border-slate-200 overflow-hidden h-full">
-          {/* Question Meta Row */}
-          <div className="h-10 bg-slate-50 border-b border-slate-200 px-4 flex justify-between items-center select-none shrink-0">
-            <div className="flex items-center gap-3">
-              <span className="font-bold text-xs text-slate-700">Question No. {activeQuestion?.questionNumber}</span>
-              {activeQuestion?.topic && (
-                <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-100/50">
-                  {activeQuestion.topic}
-                </span>
-              )}
-            </div>
+        {/* -------------------- WORKSPACE WRAPPER -------------------- */}
+        <div className="flex-1 flex overflow-hidden bg-white">
+          {/* ==================== LEFT AREA (QUESTIONS & RESPONSES) ==================== */}
+          <div className="flex-1 flex flex-col bg-slate-50 border-r border-slate-200 overflow-hidden h-full">
+            {/* Question Meta Row */}
+            <div className="h-10 bg-slate-50 border-b border-slate-200 px-4 flex justify-between items-center select-none shrink-0">
+              <div className="flex items-center gap-3">
+                <span className="font-bold text-xs text-slate-700">Question No. {activeQuestion?.questionNumber}</span>
+                {activeQuestion?.topic && (
+                  <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-100">
+                    {activeQuestion.topic}
+                  </span>
+                )}
+              </div>
 
-            <div className="flex items-center gap-3">
-              <span className="hidden sm:inline-flex text-[10px] font-bold text-green-600">+4 CORRECT</span>
-              <span className="hidden sm:inline-flex text-[10px] font-bold text-red-600">-1 INCORRECT</span>
-              <button
-                type="button"
-                onClick={() => setSidebarExpanded(!sidebarExpanded)}
-                className="px-2 py-0.5 border border-slate-300 text-slate-700 bg-white hover:bg-slate-100 text-[10px] rounded font-mono font-bold transition flex items-center gap-1 cursor-pointer"
-                title={sidebarExpanded ? "Collapse Question Palette to maximize reading space" : "Expand Question Palette"}
-              >
-                <span>{sidebarExpanded ? "👉 Collapse Palette" : "👈 Expand Palette"}</span>
-              </button>
-            </div>
+              <div className="flex items-center gap-3">
+                <span className="hidden sm:inline-flex text-[11px] font-bold text-emerald-600">+4</span>
+                <span className="hidden sm:inline-flex text-[11px] font-bold text-rose-600">-1</span>
+                <button
+                  type="button"
+                  onClick={() => setSidebarExpanded(!sidebarExpanded)}
+                  className="px-2.5 py-1 border border-slate-300 text-slate-700 bg-white hover:bg-slate-100 text-[11px] rounded font-semibold transition flex items-center gap-1.5 cursor-pointer"
+                  title={sidebarExpanded ? "Collapse Question Palette" : "Expand Question Palette"}
+                >
+                  <Layers size={13} className="text-slate-500" />
+                  <span>{sidebarExpanded ? "Hide Palette" : "Show Palette"}</span>
+                </button>
+              </div>
           </div>
 
           {/* QUESTION TEXT AND INPUT AREA (Scrollable) */}
@@ -897,31 +898,32 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
               </div>
             </div>
 
-            {/* KEYBOARD SHORTCUT CHIP CHEAT SHEET */}
-            <div className="mt-3 pt-3 border-t border-slate-200">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 text-left flex items-center gap-1.1">
-                <span>⌨️</span> <span>Keyboard Shortcuts</span>
+            {/* KEYBOARD SHORTCUTS PALETTE */}
+            <div className="mt-4 pt-3 border-t border-slate-200">
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5 text-left flex items-center gap-1.5">
+                <Keyboard size={13} className="text-slate-400" />
+                <span>Shortcuts</span>
               </p>
-              <div className="grid grid-cols-2 gap-1.5 text-[9px] text-slate-600 font-medium">
-                <div className="bg-slate-100 border border-slate-200/60 rounded p-1.5 text-left flex justify-between items-center">
-                  <span>Option Select:</span>
-                  <span className="font-mono bg-white px-1 py-0.25 rounded border border-slate-300 font-extrabold text-[#1a3a5f] text-[8.5px]">A / B / C / D</span>
+              <div className="grid grid-cols-2 gap-1.5 text-[10px] text-slate-600 font-medium">
+                <div className="bg-slate-100/80 border border-slate-200 rounded p-1.5 text-left flex justify-between items-center">
+                  <span>Select:</span>
+                  <span className="font-mono bg-white px-1 py-0.5 rounded border border-slate-300 font-bold text-[#1a3a5f] text-[9.5px]">A / B / C / D</span>
                 </div>
-                <div className="bg-slate-100 border border-slate-200/60 rounded p-1.5 text-left flex justify-between items-center">
-                  <span>Save & Next:</span>
-                  <span className="font-mono bg-white px-1 py-0.25 rounded border border-slate-300 font-extrabold text-[#1a3a5f] text-[8.5px] uppercase">S / Enter</span>
+                <div className="bg-slate-100/80 border border-slate-200 rounded p-1.5 text-left flex justify-between items-center">
+                  <span>Save:</span>
+                  <span className="font-mono bg-white px-1 py-0.5 rounded border border-slate-300 font-bold text-[#1a3a5f] text-[9.5px]">S / Enter</span>
                 </div>
-                <div className="bg-slate-100 border border-slate-200/60 rounded p-1.5 text-left flex justify-between items-center">
-                  <span>Prev / Next Q:</span>
-                  <span className="font-mono bg-white px-1 py-0.25 rounded border border-slate-300 font-extrabold text-[#1a3a5f] text-[8.5px]">← / →</span>
+                <div className="bg-slate-100/80 border border-slate-200 rounded p-1.5 text-left flex justify-between items-center">
+                  <span>Navigate:</span>
+                  <span className="font-mono bg-white px-1 py-0.5 rounded border border-slate-300 font-bold text-[#1a3a5f] text-[9.5px]">← / →</span>
                 </div>
-                <div className="bg-slate-100 border border-slate-200/60 rounded p-1.5 text-left flex justify-between items-center">
-                  <span>Tag Review:</span>
-                  <span className="font-mono bg-white px-1 py-0.25 rounded border border-slate-300 font-extrabold text-[#1a3a5f] text-[8.5px]">M</span>
+                <div className="bg-slate-100/80 border border-slate-200 rounded p-1.5 text-left flex justify-between items-center">
+                  <span>Review:</span>
+                  <span className="font-mono bg-white px-1 py-0.5 rounded border border-slate-300 font-bold text-[#1a3a5f] text-[9.5px]">M</span>
                 </div>
-                <div className="bg-slate-100 border border-slate-200/60 rounded p-1.5 text-left flex justify-between items-center col-span-2">
-                  <span>Clear Selection:</span>
-                  <span className="font-mono bg-white px-1.5 py-0.25 rounded border border-slate-300 font-extrabold text-[#1a3a5f] text-[8.5px] uppercase">Backspace / C</span>
+                <div className="bg-slate-100/80 border border-slate-200 rounded p-1.5 text-left flex justify-between items-center col-span-2">
+                  <span>Clear:</span>
+                  <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-slate-300 font-bold text-[#1a3a5f] text-[9.5px]">Backspace / C</span>
                 </div>
               </div>
             </div>

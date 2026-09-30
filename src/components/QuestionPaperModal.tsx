@@ -82,27 +82,27 @@ export function QuestionPaperModal({ questions, onClose }: QuestionPaperModalPro
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 animate-fade-in backdrop-blur-xs select-text">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden animate-scale-up">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden border border-slate-200">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white px-5 py-4 flex items-center justify-between border-b border-blue-800 select-none">
-          <div className="flex items-center gap-2">
-            <Eye size={18} />
-            <h2 className="font-bold text-sm uppercase tracking-wide">Question Paper Overview</h2>
+        <div className="bg-[#1a3a5f] text-white px-6 py-4 flex items-center justify-between border-b border-slate-700/40 select-none">
+          <div className="flex items-center gap-2.5">
+            <BookOpen size={18} className="text-blue-300" />
+            <h2 className="font-bold text-sm tracking-tight">Question Paper Overview</h2>
           </div>
           <button
             onClick={onClose}
-            className="text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-full transition cursor-pointer"
+            className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-lg transition cursor-pointer"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-          <div className="text-slate-500 text-xs mb-6 border border-amber-200 bg-amber-50 p-3 rounded flex items-start gap-2 select-none">
-            <span>⚠️</span>
+          <div className="text-slate-600 text-xs mb-6 border border-blue-100 bg-blue-50/60 p-3.5 rounded-xl flex items-start gap-2.5 select-none leading-relaxed">
+            <Eye size={16} className="text-[#1a3a5f] shrink-0 mt-0.5" />
             <span>
-              This is a unified overview of all questions in the test. In the real exam, you cannot submit answers from here; please return to the main computer test workspace and use the navigation palette.
+              This is a unified read-only overview of all questions in the examination. To record answers, return to the test workspace and navigate via the Question Palette.
             </span>
           </div>
 
@@ -112,10 +112,10 @@ export function QuestionPaperModal({ questions, onClose }: QuestionPaperModalPro
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-150 p-4 flex justify-end bg-slate-50 select-none">
+        <div className="border-t border-slate-200 p-4 px-6 flex justify-end bg-slate-50 select-none">
           <button
             onClick={onClose}
-            className="px-5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded text-xs transition cursor-pointer"
+            className="px-5 py-2 bg-[#1a3a5f] hover:bg-[#152e4d] text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-xs"
           >
             Return to Exam
           </button>
