@@ -686,11 +686,11 @@ export function AnalyticsDashboard({ testState, onRestart }: AnalyticsDashboardP
         <div className="text-center md:text-left leading-tight">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-wider rounded-full mb-3 shadow shadow-indigo-900 border border-indigo-500/20">
             <Award size={12} />
-            <span>EXAMINATION EVALUATED STATUS: COMMITTED</span>
+            <span>EXAMINATION REPORT GENERATED</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">Performance Analytics Portfolio</h1>
           <p className="text-xs text-indigo-200 mt-2 max-w-xl">
-            Derived using standard mock parameters from Allen Institutes and MathonGo scoring curves, featuring detailed conceptual tags, timing matrices, and LaTeX models.
+            Comprehensive evaluation metrics with standard NTA scoring (+4 / -1), conceptual topic breakdown, time efficiency diagnostics, and step-by-step LaTeX derivations.
           </p>
         </div>
 
@@ -711,11 +711,11 @@ export function AnalyticsDashboard({ testState, onRestart }: AnalyticsDashboardP
           </div>
           <div>
             <h3 className="font-heading font-black text-xs text-slate-900 uppercase tracking-widest flex items-center gap-1.5">
-              <span>Portable PDF Export Terminal</span>
-              <span className="bg-indigo-200/60 text-indigo-800 text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase">June 2026 Ready</span>
+              <span>PDF Solutions & Report Export</span>
+              <span className="bg-indigo-200/60 text-indigo-800 text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase">Verified</span>
             </h3>
             <p className="text-[11px] text-slate-505 mt-0.5 max-w-xl">
-              Securely download offline scorecards & full solution papers with LaTeX clean step formulas to solve, revise and study anytime!
+              Export comprehensive printable scorecards and step-by-step verified question solutions with LaTeX formatting.
             </p>
           </div>
         </div>
@@ -879,7 +879,7 @@ export function AnalyticsDashboard({ testState, onRestart }: AnalyticsDashboardP
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
           <h3 className="font-black text-slate-800 text-sm mb-4 uppercase tracking-wider select-none flex items-center gap-2">
             <BookOpen size={16} className="text-blue-600" />
-            <span>Conceptual Topic Accuracy (allen metrics)</span>
+            <span>Conceptual Topic Accuracy (Sub-topic Breakdown)</span>
           </h3>
           <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
             {Object.keys(analytics.topicPerformance).length === 0 ? (
