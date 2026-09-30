@@ -126,78 +126,99 @@ export function ResultsPage({ completedAttempts, userProfile, onSelectAttempt, o
       </div>
 
       {/* CORE PERFORMANCE SUMMARY BENTO BOX */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {/* BLOCK 1: ACCURACY PROGRESSION */}
-        <div className="bg-white border-2 border-slate-100 rounded-2xl p-6 shadow-xs flex flex-col justify-between" id="accuracy_stats_card">
-          <div>
-            <div className="flex items-center gap-2 text-slate-500">
-              <TrendingUp className="w-4 h-4 text-emerald-500" />
-              <span className="text-[11px] font-bold uppercase tracking-wider">Accuracy Improvement</span>
-            </div>
-            <div className="mt-4">
-              <span className="text-[11px] text-slate-400 font-bold block uppercase">Your Accuracy Growth</span>
-              <div className="text-2xl font-black text-slate-800 mt-1 flex items-center gap-1">
-                {stats.firstAccuracy}% → {stats.latestAccuracy}% 
-                <span className="text-sm font-extrabold text-emerald-600 ml-1.5 bg-emerald-50 px-2 py-0.5 rounded-md flex items-center gap-0.5">
-                  ↑{stats.accuracyDiff} points
-                </span>
-              </div>
-            </div>
+      {displayData.length === 0 ? (
+        <div className="bg-white border-2 border-slate-100 rounded-2xl p-8 mb-8 text-center space-y-3 shadow-xs">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+            <Award size={24} />
           </div>
-          <p className="text-[11px] text-slate-500 mt-4 pt-4 border-t border-slate-50 leading-relaxed italic">
-            "Your accuracy: {stats.firstAccuracy}% → {stats.latestAccuracy}% (↑{stats.accuracyDiff} points)"
+          <h3 className="text-base font-bold text-slate-800">No Exam Attempts Recorded Yet</h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+            Upload and complete your first JEE mock paper or launch the benchmark test. Your accuracy, percentile calibration, and subject progression will automatically calculate here!
           </p>
+          <div className="pt-2">
+            <button
+              onClick={() => onSetStep("UPLOAD")}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              <span>Launch First Mock Practice</span>
+              <ArrowRight size={13} />
+            </button>
+          </div>
         </div>
-
-        {/* BLOCK 2: PERCENTILE COMPARISON */}
-        <div className="bg-white border-2 border-slate-100 rounded-2xl p-6 shadow-xs flex flex-col justify-between" id="percentile_compare_card">
-          <div>
-            <div className="flex items-center gap-2 text-slate-500">
-              <Target className="w-4 h-4 text-amber-500" />
-              <span className="text-[11px] font-bold uppercase tracking-wider">Compare to Target Percentile</span>
-            </div>
-            <div className="mt-4">
-              <span className="text-[11px] text-slate-400 font-bold block uppercase">Estimated Latest vs. Target</span>
-              <div className="text-2xl font-black text-slate-800 mt-1 flex items-baseline gap-1.5 select-all">
-                {stats.latestPercentile}%ile 
-                <span className="text-xs text-slate-400 font-semibold">vs {userProfile.targetPercentile || 98.5}%ile target</span>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {/* BLOCK 1: ACCURACY PROGRESSION */}
+          <div className="bg-white border-2 border-slate-100 rounded-2xl p-6 shadow-xs flex flex-col justify-between" id="accuracy_stats_card">
+            <div>
+              <div className="flex items-center gap-2 text-slate-500">
+                <TrendingUp className="w-4 h-4 text-emerald-500" />
+                <span className="text-[11px] font-bold uppercase tracking-wider">Accuracy Improvement</span>
               </div>
+              <div className="mt-4">
+                <span className="text-[11px] text-slate-400 font-bold block uppercase">Your Accuracy Growth</span>
+                <div className="text-2xl font-black text-slate-800 mt-1 flex items-center gap-1">
+                  {stats.firstAccuracy}% → {stats.latestAccuracy}% 
+                  <span className="text-sm font-extrabold text-emerald-600 ml-1.5 bg-emerald-50 px-2 py-0.5 rounded-md flex items-center gap-0.5">
+                    {stats.accuracyDiff >= 0 ? `↑+${stats.accuracyDiff}` : `↓${stats.accuracyDiff}`} points
+                  </span>
+                </div>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-4 pt-4 border-t border-slate-50 leading-relaxed italic">
+              "Your accuracy: {stats.firstAccuracy}% → {stats.latestAccuracy}%"
+            </p>
+          </div>
+
+          {/* BLOCK 2: PERCENTILE COMPARISON */}
+          <div className="bg-white border-2 border-slate-100 rounded-2xl p-6 shadow-xs flex flex-col justify-between" id="percentile_compare_card">
+            <div>
+              <div className="flex items-center gap-2 text-slate-500">
+                <Target className="w-4 h-4 text-amber-500" />
+                <span className="text-[11px] font-bold uppercase tracking-wider">Compare to Target Percentile</span>
+              </div>
+              <div className="mt-4">
+                <span className="text-[11px] text-slate-400 font-bold block uppercase">Estimated Latest vs. Target</span>
+                <div className="text-2xl font-black text-slate-800 mt-1 flex items-baseline gap-1.5 select-all">
+                  {stats.latestPercentile}%ile 
+                  <span className="text-xs text-slate-400 font-semibold">vs {userProfile.targetPercentile || 98.5}%ile target</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-slate-50">
+              {targetDiff.met ? (
+                <div className="text-[11px] font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50/50 p-2 rounded-lg">
+                  🎉 Goal Exceeded! You are +{targetDiff.value}%ile above target. Keep practicing!
+                </div>
+              ) : (
+                <div className="text-[11px] font-bold text-indigo-650 flex items-center gap-1.5 bg-indigo-50/50 p-2 rounded-lg">
+                  🎯 Just {targetDiff.value}%ile to reach your target goal.
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-slate-50">
-            {targetDiff.met ? (
-              <div className="text-[11px] font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50/50 p-2 rounded-lg">
-                🎉 Goal Exceeded! You are +{targetDiff.value}%ile above targets. Keep parsing!
+          {/* BLOCK 3: ATTEMPTS STATISTICS */}
+          <div className="bg-white border-2 border-slate-100 rounded-2xl p-6 shadow-xs flex flex-col justify-between" id="attempts_stats_card">
+            <div>
+              <div className="flex items-center gap-2 text-slate-500">
+                <Award className="w-4 h-4 text-indigo-500" />
+                <span className="text-[11px] font-bold uppercase tracking-wider">Latest Score</span>
               </div>
-            ) : (
-              <div className="text-[11px] font-bold text-indigo-650 flex items-center gap-1.5 bg-indigo-50/50 p-2 rounded-lg">
-                🎯 Close to target! Just {targetDiff.value}%ile remaining to lock down your dream college.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* BLOCK 3: ATTEMPTS STATISTICS */}
-        <div className="bg-white border-2 border-slate-100 rounded-2xl p-6 shadow-xs flex flex-col justify-between" id="attempts_stats_card">
-          <div>
-            <div className="flex items-center gap-2 text-slate-500">
-              <Award className="w-4 h-4 text-indigo-500" />
-              <span className="text-[11px] font-bold uppercase tracking-wider">Workload Velocity</span>
-            </div>
-            <div className="mt-4">
-              <span className="text-[11px] text-slate-400 font-bold block uppercase">Latest Core Marks</span>
-              <div className="text-2xl font-black text-slate-800 mt-1">
-                {stats.latestScore} / {stats.maxScore} 
-                <span className="text-xs text-slate-550 block mt-0.5 font-bold">Based on latest Mock PDF syllabus.</span>
+              <div className="mt-4">
+                <span className="text-[11px] text-slate-400 font-bold block uppercase">Exam Raw Score</span>
+                <div className="text-2xl font-black text-slate-800 mt-1">
+                  {stats.latestScore} / {stats.maxScore} 
+                  <span className="text-xs text-slate-500 block mt-0.5 font-bold">Standard NTA (+4 / -1) scoring</span>
+                </div>
               </div>
             </div>
+            <p className="text-[10px] text-slate-400 mt-4 pt-4 border-t border-slate-50 leading-relaxed font-mono">
+              Total completed attempts: {displayData.length}
+            </p>
           </div>
-          <p className="text-[10px] text-slate-400 mt-4 pt-4 border-t border-slate-50 leading-relaxed font-mono">
-            Tracks total progress of {displayData.length} records.
-          </p>
         </div>
-      </div>
+      )}
 
       {/* CHART & TEST SELECTION DETAILS */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
