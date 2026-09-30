@@ -1352,39 +1352,12 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
       )}
 
       {isLoading ? (
-        <div className="bg-linear-to-b from-amber-50/40 via-white to-orange-50/20 rounded-2xl border-2 border-amber-200/80 p-6 md:p-8 text-center shadow-xl relative overflow-hidden select-none text-slate-800 min-h-[460px]">
-          {/* Custom style injection for high-performance pure-CSS animations */}
+        <div className="bg-gradient-to-b from-slate-50 via-white to-blue-50/20 rounded-2xl border-2 border-slate-200 p-6 md:p-8 text-center shadow-xl relative overflow-hidden select-none text-slate-800 min-h-[460px]">
+          {/* Scanning beam animation */}
           <style>{`
             @keyframes scan-beam {
               0%, 100% { top: 0%; opacity: 0.8; }
               50% { top: 100%; opacity: 0.8; }
-            }
-            @keyframes bounce-cozy {
-              0%, 100% { transform: translateY(0); }
-              50% { transform: translateY(-8px); }
-            }
-            @keyframes float-cozy {
-              0%, 100% { transform: translateY(0); }
-              50% { transform: translateY(-5px); }
-            }
-            @keyframes pulse-cozy {
-              0%, 100% { transform: scale(3D); }
-              50% { transform: scale(1.03); }
-            }
-            @keyframes tilt-cozy {
-              0%, 100% { transform: rotate(0deg); }
-              50% { transform: rotate(3deg); }
-            }
-            @keyframes float-particle {
-              0% { transform: translateY(15px) translateX(0px); opacity: 0; }
-              40% { opacity: 0.95; }
-              80% { opacity: 0.95; }
-              100% { transform: translateY(-60px) translateX(var(--float-x, 15px)); opacity: 0; }
-            }
-            @keyframes rise-steam {
-              0% { transform: translateY(0) scale(0.9); opacity: 0; }
-              50% { opacity: 0.7; }
-              100% { transform: translateY(-15px) scale(1.15); opacity: 0; }
             }
           `}</style>
 
