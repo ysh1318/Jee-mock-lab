@@ -681,51 +681,50 @@ export function AnalyticsDashboard({ testState, onRestart }: AnalyticsDashboardP
   return (
     <div className="max-w-6xl mx-auto py-10 px-4 select-text">
       {/* -------------------- HEADLINE CARD -------------------- */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-slate-800 text-white rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between shadow-xl mb-6 select-none animate-fade-in relative overflow-hidden">
-        <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-blue-500/10 rounded-full blur-3xl" />
+      <div className="bg-[#1a3a5f] border border-slate-700/40 text-white rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between shadow-md mb-6 select-none relative overflow-hidden">
         <div className="text-center md:text-left leading-tight">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-wider rounded-full mb-3 shadow shadow-indigo-900 border border-indigo-500/20">
-            <Award size={12} />
-            <span>EXAMINATION REPORT GENERATED</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 text-blue-200 text-xs font-semibold rounded-full mb-3 border border-white/10">
+            <Award size={13} />
+            <span>Official Examination Report</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">Performance Analytics Portfolio</h1>
-          <p className="text-xs text-indigo-200 mt-2 max-w-xl">
-            Comprehensive evaluation metrics with standard NTA scoring (+4 / -1), conceptual topic breakdown, time efficiency diagnostics, and step-by-step LaTeX derivations.
+          <p className="text-xs text-blue-200/90 mt-2 max-w-xl font-normal leading-relaxed">
+            Detailed evaluation based on standard NTA scoring (+4 / -1), chapter-wise accuracy breakdowns, time management diagnostics, and step-by-step LaTeX derivations.
           </p>
         </div>
 
         <button
           onClick={onRestart}
-          className="mt-6 md:mt-0 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg transition-transform hover:scale-[1.01] active:scale-[0.99] flex items-center gap-2 cursor-pointer shadow-lg shadow-indigo-900/45 select-none"
+          className="mt-6 md:mt-0 px-5 py-2.5 bg-white hover:bg-slate-100 text-[#1a3a5f] font-bold text-xs rounded-xl transition cursor-pointer shadow-sm select-none"
         >
-          <Home size={14} />
-          <span>Test Another Paper</span>
+          <Home size={14} className="inline mr-1.5 text-[#1a3a5f]" />
+          <span>Practice Another Paper</span>
         </button>
       </div>
 
       {/* -------------------- PORTABLE PDF DOWNLOAD CENTER -------------------- */}
-      <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 mb-10 flex flex-col lg:flex-row items-center justify-between gap-4 select-none animate-fade-in">
+      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 mb-10 flex flex-col lg:flex-row items-center justify-between gap-4 select-none">
         <div className="flex items-center gap-3.5 text-left">
-          <div className="w-12 h-12 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-indigo-950/20 border border-indigo-750">
-            <FileText size={22} className="animate-pulse" />
+          <div className="w-11 h-11 bg-white text-[#1a3a5f] rounded-xl flex items-center justify-center border border-slate-200 shadow-xs">
+            <FileText size={20} />
           </div>
           <div>
-            <h3 className="font-heading font-black text-xs text-slate-900 uppercase tracking-widest flex items-center gap-1.5">
+            <h3 className="font-bold text-xs text-slate-900 tracking-tight flex items-center gap-2">
               <span>PDF Solutions & Report Export</span>
-              <span className="bg-indigo-200/60 text-indigo-800 text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase">Verified</span>
+              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Ready</span>
             </h3>
-            <p className="text-[11px] text-slate-505 mt-0.5 max-w-xl">
-              Export comprehensive printable scorecards and step-by-step verified question solutions with LaTeX formatting.
+            <p className="text-xs text-slate-500 mt-0.5 max-w-xl">
+              Download your verified scorecard and full question-by-question model solutions in standard printable format.
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3.5 w-full lg:w-auto">
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
           <button
             type="button"
             disabled={isDownloadingScorecard}
             onClick={downloadScorecard}
-            className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 px-4.5 py-2.5 bg-slate-900 hover:bg-slate-850 disabled:bg-slate-400 text-white font-extrabold text-[11px] uppercase tracking-wider rounded-xl transition cursor-pointer shadow-sm min-w-[160px]"
+            className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white font-semibold text-xs rounded-xl transition cursor-pointer shadow-xs min-w-[150px]"
           >
             {isDownloadingScorecard ? (
               <>
@@ -735,7 +734,7 @@ export function AnalyticsDashboard({ testState, onRestart }: AnalyticsDashboardP
             ) : (
               <>
                 <Download size={13} />
-                <span>My Report PDF</span>
+                <span>Download Scorecard</span>
               </>
             )}
           </button>
@@ -744,17 +743,17 @@ export function AnalyticsDashboard({ testState, onRestart }: AnalyticsDashboardP
             type="button"
             disabled={isDownloadingSolutions}
             onClick={downloadSolvedPaper}
-            className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 px-4.5 py-2.5 bg-indigo-600 hover:bg-indigo-555 disabled:bg-indigo-400 text-white font-extrabold text-[11px] uppercase tracking-wider rounded-xl transition cursor-pointer shadow-md shadow-indigo-950/10 min-w-[190px]"
+            className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold text-xs rounded-xl transition cursor-pointer shadow-xs min-w-[160px]"
           >
             {isDownloadingSolutions ? (
               <>
                 <Loader2 size={13} className="animate-spin" />
-                <span>Compiling Book...</span>
+                <span>Compiling Solutions...</span>
               </>
             ) : (
               <>
                 <BookOpen size={13} />
-                <span>Full Solutions PDF</span>
+                <span>Detailed Solutions PDF</span>
               </>
             )}
           </button>

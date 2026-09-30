@@ -7,7 +7,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion } from "motion/react";
 import { 
   Upload, FileText, CheckCircle, Database, HelpCircle, AlertCircle, ArrowRight, BookOpen,
-  Key, Eye, EyeOff, Check, Cpu, Settings, Sparkles
+  Key, Eye, EyeOff, Check, Cpu, Settings, Sparkles, Monitor, BarChart3
 } from "lucide-react";
 import { Question, UserAccount } from "../types";
 import { PRESET_MOCK_TEST } from "./data/presetTest";
@@ -1388,7 +1388,7 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
 
             <button
               type="button"
-              className="mt-5 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded shadow-md shadow-blue-100 transition cursor-pointer"
+              className="mt-5 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer"
             >
               Select PDF File
             </button>
@@ -1399,35 +1399,34 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.5 }}
-            whileHover={{ y: -4, borderColor: "rgba(59, 130, 246, 0.4)" }}
-            className="md:col-span-5 lg:col-span-4 bg-slate-900 text-slate-100 rounded-xl p-5 flex flex-col justify-between shadow-lg border border-slate-800 transition-colors"
+            whileHover={{ y: -3 }}
+            className="md:col-span-5 lg:col-span-4 bg-slate-900 text-slate-100 rounded-2xl p-6 flex flex-col justify-between shadow-md border border-slate-800 transition-colors"
           >
             <div>
               <div className="flex items-center justify-between gap-1 mb-4">
-                <div className="flex items-center gap-1.5 text-blue-400 text-[10.5px] font-bold uppercase tracking-wider">
-                  <Database size={13} />
-                  <span>Instant Playgrounds</span>
+                <div className="flex items-center gap-1.5 text-blue-400 text-xs font-semibold uppercase tracking-wider">
+                  <BookOpen size={14} />
+                  <span>Preset Practice Paper</span>
                 </div>
-                <span className="text-[8px] bg-indigo-950 text-blue-300 border border-blue-800/40 px-1.5 py-0.5 rounded-full font-mono font-extrabold uppercase">
-                  Free CBT Access
+                <span className="text-[10px] bg-blue-950 text-blue-300 border border-blue-800/40 px-2 py-0.5 rounded-full font-mono font-bold uppercase">
+                  Ready to Solve
                 </span>
               </div>
 
               <div className="text-left space-y-3">
-                <h3 className="font-extrabold text-sm text-white uppercase tracking-wider flex items-center gap-1">
-                  <span>📚 Benchmark Mock Test</span>
+                <h3 className="font-bold text-sm text-white tracking-tight">
+                  Full Syllabus JEE Benchmark Test
                 </h3>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Instantly experience an authentic NTA CBT exam without any PDF upload. Features calibrated standard-quality physics mechanics, chemical equilibrium, and coordinate math questions.
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Practice immediately without uploading a PDF. Includes 75 standard questions with authentic NTA navigation and instant percentile scoring.
                 </p>
 
-                <div className="bg-slate-800/50 p-3.5 rounded-lg border border-slate-800 select-text space-y-2">
-                  <div className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest font-mono">Prescribed Syllabus Paper</div>
-                  <div className="font-semibold text-xs text-white">Full Syllabus JEE Main Mock Test</div>
-                  <div className="text-[10.5px] text-slate-400 space-y-1">
-                    <div>• Physics (MCQ + Numerical Key)</div>
-                    <div>• Chemistry (MCQ + Numerical Key)</div>
-                    <div>• Mathematics (MCQ + Numerical Key)</div>
+                <div className="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/60 select-text space-y-2">
+                  <div className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider font-mono">Curated Section Layout</div>
+                  <div className="text-xs text-slate-300 space-y-1">
+                    <div>• Physics (20 MCQs + 5 Numerical NATs)</div>
+                    <div>• Chemistry (20 MCQs + 5 Numerical NATs)</div>
+                    <div>• Mathematics (20 MCQs + 5 Numerical NATs)</div>
                   </div>
                 </div>
               </div>
@@ -1436,9 +1435,9 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
             <button
               type="button"
               onClick={selectPreset}
-              className="mt-6 w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 hover:scale-[1.01] text-white font-bold text-xs rounded transition flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-indigo-950/20 active:scale-[0.99]"
+              className="mt-6 w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-blue-900/20"
             >
-              <span>Launch Calibrated Simulator</span>
+              <span>Launch Benchmark Test</span>
               <ArrowRight size={13} />
             </button>
           </motion.div>
@@ -1446,24 +1445,33 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
       )}
 
       {/* Quick guide */}
-      <div className="mt-12 border-t pt-8 grid grid-cols-1 md:grid-cols-3 gap-6 text-slate-500 select-text text-xs leading-relaxed">
-        <div className="p-4 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-100 transition">
-          <h4 className="font-bold text-slate-700 text-[13px] mb-2 flex items-center gap-1.5">
-            <span>⚙️</span> Standard NTA CBT Replica
+      <div className="mt-12 border-t border-slate-200 pt-8 grid grid-cols-1 md:grid-cols-3 gap-6 text-slate-500 select-text text-xs leading-relaxed text-left">
+        <div className="p-4 bg-white rounded-xl border border-slate-200">
+          <h4 className="font-bold text-slate-800 text-xs mb-1.5 flex items-center gap-2">
+            <Monitor size={15} className="text-[#1a3a5f]" />
+            <span>Authentic CBT Replica</span>
           </h4>
-          The engine mimics the exact interface used in real JEE Mains centers, complete with the legend palette indices, timers, instructions, and save workflows.
+          <p className="text-slate-500 leading-relaxed">
+            Replicates the official JEE computer-based testing interface, including question palette states, countdown timer, and Section A/B inputs.
+          </p>
         </div>
-        <div className="p-4 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-100 transition">
-          <h4 className="font-bold text-slate-700 text-[13px] mb-2 flex items-center gap-1.5">
-            <span>➗</span> Formulas with LaTeX
+        <div className="p-4 bg-white rounded-xl border border-slate-200">
+          <h4 className="font-bold text-slate-800 text-xs mb-1.5 flex items-center gap-2">
+            <Sparkles size={15} className="text-[#1a3a5f]" />
+            <span>LaTeX Math & Sub-Questions</span>
           </h4>
-          Gemini automatically translates complicated mathematical vectors, chemistry stoichiometry elements, and coordinate layouts into clear-drawn math.
+          <p className="text-slate-500 leading-relaxed">
+            Automatic translation of mathematical matrices, calculus notation, and chemical reactions into crisp KaTeX formulas.
+          </p>
         </div>
-        <div className="p-4 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-100 transition">
-          <h4 className="font-bold text-slate-700 text-[13px] mb-2 flex items-center gap-1.5">
-            <span>📊</span> In-Depth Analytics
+        <div className="p-4 bg-white rounded-xl border border-slate-200">
+          <h4 className="font-bold text-slate-800 text-xs mb-1.5 flex items-center gap-2">
+            <BarChart3 size={15} className="text-[#1a3a5f]" />
+            <span>Deep Diagnostic Scorecards</span>
           </h4>
-          Get granular subject statistics, correctness trackers, topic-wise accuracy metrics, and time-overrun diagnostics.
+          <p className="text-slate-500 leading-relaxed">
+            Instant evaluation with chapter-wise accuracy breakdowns, time-budget analysis, and JoSAA admission rank calibration.
+          </p>
         </div>
       </div>
 
