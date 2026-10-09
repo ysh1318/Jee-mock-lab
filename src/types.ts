@@ -31,9 +31,13 @@ export interface Question {
   options?: string[]; // exactly 4 for Section A, empty/undefined for Section B
   correctAnswer: string; // "A" | "B" | "C" | "D" or number value e.g., "5" or "12.5"
   topic: string; // e.g., "Electrostatics", "Thermodynamics", "Quadratic Equations"
-  difficulty: "Easy" | "Medium" | "Hard";
   explanation?: string; // step-by-step resolution of question
   isOfflineFallback?: boolean; // indicator if generated via server-side offline presets
+  hasDiagram?: boolean;
+  diagramBox?: [number, number, number, number]; // [ymin, xmin, ymax, xmax] 0-1000 scale
+  diagramPage?: number; // 1-based page number
+  diagramImage?: string; // Base64 data URI of the cropped diagram (png)
+  difficulty?: "Easy" | "Medium" | "Moderate" | "Hard";
 }
 
 export interface TestState {
@@ -76,6 +80,7 @@ export interface UserAccount {
   suspendedUntil?: string;
   suspensionReason?: string;
   deviceId?: string;
+  hasAllAccessPass?: boolean;
   messages?: UserMessage[];
   createdAt: string;
 }
@@ -105,9 +110,33 @@ export interface CreditTransaction {
   id: string;
   userId: string;
   amount: number;
-  type: "signup_bonus" | "purchase_grant" | "pdf_parse_burn" | "admin_adjustment" | "admin_bulk";
+  type: "signup_bonus" | "purchase_grant" | "pdf_parse_burn" | "admin_adjustment" | "admin_bulk" | "all_access_pass_unlock";
   description: string;
   createdAt: string;
+}
+
+export type ShiftPattern = "LEGACY_90" | "NEW_75";
+
+export interface ShiftMetadata {
+  id: string;
+  title: string;
+  year: 2024 | 2025 | 2026;
+  session: 1 | 2;
+  sessionName: string;
+  date: string;
+  shift: 1 | 2;
+  timeWindow: string;
+  pattern: ShiftPattern;
+  totalQuestions: 90 | 75;
+  difficulty: "Easy" | "Moderate" | "Tough";
+  marksFor99Percentile: number;
+  isFlagshipFree: boolean;
+  tagline: string;
+  questionDistribution: {
+    physics: { secA: number; secB: number; secBMaxAttempt: number };
+    chemistry: { secA: number; secB: number; secBMaxAttempt: number };
+    maths: { secA: number; secB: number; secBMaxAttempt: number };
+  };
 }
 
 

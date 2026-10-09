@@ -42,8 +42,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserAccountState(account);
     if (account) {
       localStorage.setItem("jee_user_account", JSON.stringify(account));
+      if (account.hasAllAccessPass || account.role === "admin") {
+        localStorage.setItem("jee_all_access_pass", "true");
+      }
     } else {
       localStorage.removeItem("jee_user_account");
+      localStorage.removeItem("jee_all_access_pass");
     }
   };
 
@@ -68,8 +72,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await fetch(`/api/user/${userAccount.id}/wallet`);
       if (res.ok) {
         const data = await res.json();
-        if (data && data.credits !== undefined && data.credits !== userAccount.credits) {
-          updateCredits(data.credits);
+        if (data && data.credits !== undefined) {
+          const creditsChanged = data.credits !== userAccount.credits;
+          const passChanged = data.hasAllAccessPass !== undefined && data.hasAllAccessPass !== Boolean(userAccount.hasAllAccessPass);
+          if (creditsChanged || passChanged) {
+            const updated = {
+              ...userAccount,
+              credits: data.credits,
+              hasAllAccessPass: data.hasAllAccessPass ?? userAccount.hasAllAccessPass
+            };
+            setUserAccount(updated);
+          }
         }
       }
     } catch (err) {

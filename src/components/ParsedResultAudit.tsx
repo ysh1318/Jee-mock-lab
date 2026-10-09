@@ -14,7 +14,8 @@ import {
   RotateCcw,
   BookOpen,
   Info,
-  ChevronDown
+  ChevronDown,
+  Image as ImageIcon
 } from "lucide-react";
 import { Question } from "../types";
 import { NtaInstructions } from "./NtaInstructions";
@@ -40,20 +41,21 @@ export function ParsedResultAudit({ testName, questions, onProceedToTest, onCanc
     const warnings: Array<{ id: string; type: "warning" | "error"; message: string }> = [];
 
     questions.forEach((q, index) => {
+      if (!q) return;
       const isSecA = q.section === "Section A" || !q.section;
       if (isSecA && (!q.options || q.options.length < 4)) {
         warnings.push({
           id: `opt-${q.id || index}`,
           type: "warning",
-          message: `Q.${q.questionNumber || index + 1} (${q.subject}): Only ${q.options?.length || 0} MCQ options detected.`
+          message: `Q.${q.questionNumber || index + 1} (${q.subject || "Unknown"}): Only ${q.options?.length || 0} MCQ options detected.`
         });
       }
 
-      if (!q.correctAnswer || q.correctAnswer.trim() === "") {
+      if (!q.correctAnswer || String(q.correctAnswer).trim() === "") {
         warnings.push({
           id: `ans-${q.id || index}`,
           type: "warning",
-          message: `Q.${q.questionNumber || index + 1} (${q.subject}): Answer key not detected; placeholder set.`
+          message: `Q.${q.questionNumber || index + 1} (${q.subject || "Unknown"}): Answer key not detected; placeholder set.`
         });
       }
     });
@@ -68,11 +70,14 @@ export function ParsedResultAudit({ testName, questions, onProceedToTest, onCanc
       warnings.push({ id: "empty-m", type: "error", message: "Mathematics: 0 questions extracted." });
     }
 
+    const diagramCount = questions.filter(q => Boolean(q.diagramImage)).length;
+
     return {
       physicsCount: physicsQ.length,
       chemistryCount: chemistryQ.length,
       mathCount: mathQ.length,
       totalCount: questions.length,
+      diagramCount,
       warnings,
     };
   }, [questions]);
@@ -174,6 +179,19 @@ export function ParsedResultAudit({ testName, questions, onProceedToTest, onCanc
                   </div>
                 </div>
               </div>
+
+              {/* High-Res Diagram Extraction Indicator */}
+              {auditReport.diagramCount > 0 && (
+                <div className="p-3 bg-blue-50/70 border border-blue-200/60 rounded-xl flex items-center justify-between text-xs text-blue-900 font-medium">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon size={15} className="text-blue-600 shrink-0" />
+                    <span>High-Resolution Diagrams Detected & Embedded:</span>
+                  </div>
+                  <span className="font-mono font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md">
+                    {auditReport.diagramCount} Figures
+                  </span>
+                </div>
+              )}
 
               {/* Offline fallback note if active */}
               {questions.some(q => q.isOfflineFallback) && (

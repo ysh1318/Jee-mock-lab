@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { ShieldCheck, Lock, Trash2, Database, EyeOff, ArrowLeft, GraduationCap } from "lucide-react";
+import { ShieldCheck, Lock, Trash2, Database, EyeOff, ArrowLeft, GraduationCap, AlertTriangle } from "lucide-react";
 
 interface PrivacyPolicyProps {
   onBack: () => void;
@@ -141,8 +141,11 @@ export function PrivacyPolicy({ onBack }: PrivacyPolicyProps) {
               <p>
                 JEE aspirants frequently study on communal infrastructure, such as school laboratories, study group laptops, coaching centers, or cyber cafes. To prevent subsequent users from accessing your custom reports or consuming your private API credits:
               </p>
-              <p className="bg-amber-50/60 border border-amber-200/60 p-3.5 rounded-lg text-amber-900">
-                ⚠️ <strong>Public Device Guard:</strong> Clicking the <span className="underline decoration-amber-500 font-extrabold font-mono">Wipe All Local Data</span> button or the brush icon in the navigation bar immediately wipes all cookies, saved API keys, cached mock papers ({`savedPapers`}), and past reports from local storage, returning the testing shell to an pristine state.
+              <p className="bg-amber-50/60 border border-amber-200/60 p-3.5 rounded-lg text-amber-900 flex items-start gap-2">
+                <AlertTriangle size={15} className="text-amber-600 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Public Device Guard:</strong> Clicking the <span className="underline decoration-amber-500 font-extrabold font-mono">Wipe All Local Data</span> button or the brush icon in the navigation bar immediately wipes all cookies, saved API keys, cached mock papers ({`savedPapers`}), and past reports from local storage, returning the testing shell to an pristine state.
+                </span>
               </p>
             </section>
 

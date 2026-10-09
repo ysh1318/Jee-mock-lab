@@ -55,6 +55,16 @@ export function QuestionPaperModal({ questions, onClose }: QuestionPaperModalPro
                     <MarkdownMath text={q.questionText} />
                   </div>
 
+                  {q.diagramImage && (
+                    <div className="my-2 p-2 bg-slate-50 border border-slate-200 rounded-lg max-w-sm">
+                      <img
+                        src={q.diagramImage}
+                        alt={`Q.${q.questionNumber} Diagram`}
+                        className="max-h-48 w-auto object-contain mx-auto rounded border border-slate-100 bg-white"
+                      />
+                    </div>
+                  )}
+
                   {/* Options if Section A */}
                   {q.options && q.options.length > 0 && (
                     <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 pl-3">

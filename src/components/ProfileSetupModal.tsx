@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { UserProfile } from "../types";
-import { Award, Compass, Globe, Award as AwardIcon, Check, Settings, X, Info, ShieldCheck } from "lucide-react";
+import { Award, Compass, Globe, Award as AwardIcon, Check, Settings, X, Info, ShieldCheck, MapPin, TrendingUp } from "lucide-react";
 
 interface ProfileSetupModalProps {
   currentProfile: UserProfile;
@@ -224,15 +224,15 @@ export function ProfileSetupModal({ currentProfile, onSave, onClose }: ProfileSe
                   >
                     {INDIAN_STATES.map((st) => (
                       <option key={st} value={st}>
-                        🇮🇳 {st}
+                        {st}
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div className="mt-4 bg-blue-50/60 border border-blue-150 rounded-xl p-4 space-y-2">
-                  <div className="text-xs font-black text-blue-800 uppercase tracking-wider flex items-center gap-1">
-                    <span>🏠</span>
+                  <div className="text-xs font-black text-blue-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <MapPin size={13} className="text-blue-700 shrink-0" />
                     <span>Unlocked State Advantages:</span>
                   </div>
                   <p className="text-[11px] text-slate-650 leading-relaxed font-semibold">
@@ -322,7 +322,7 @@ export function ProfileSetupModal({ currentProfile, onSave, onClose }: ProfileSe
                 </div>
                 <div className="bg-white p-3 border border-indigo-100/70 rounded-lg text-xs leading-relaxed space-y-1 font-semibold text-slate-700">
                   <div className="flex items-center gap-1.5 text-[#1a3a5f] font-black">
-                    <span>🏆</span>
+                    <TrendingUp size={13} className="text-[#1a3a5f] shrink-0" />
                     <span>Predicted Outlook:</span>
                   </div>
                   <p className="text-[11px] leading-normal font-medium text-slate-500">

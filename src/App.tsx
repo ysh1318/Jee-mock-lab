@@ -5,8 +5,27 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { GraduationCap, BookOpen, Clock, Settings, Sparkles, BookCheck, Maximize, Minimize } from "lucide-react";
-import { Question, TestState, UserProfile, UserAccount } from "./types";
+import { 
+  GraduationCap, 
+  BookOpen, 
+  Clock, 
+  Settings, 
+  Sparkles, 
+  BookCheck, 
+  Maximize, 
+  Minimize,
+  Compass,
+  FileUp,
+  Target,
+  Award,
+  BarChart3,
+  Shield,
+  Coins,
+  Trash2,
+  Trophy,
+  Zap
+} from "lucide-react";
+import { Question, Section, TestState, UserProfile, UserAccount } from "./types";
 import { PdfUploader } from "./components/PdfUploader";
 import { CbtEngine } from "./components/CbtEngine";
 import { AnalyticsDashboard } from "./components/AnalyticsDashboard";
@@ -16,19 +35,139 @@ import { ProfileSetupModal } from "./components/ProfileSetupModal";
 import { WalletAndAuth } from "./components/WalletAndAuth";
 import { AdminControlHub } from "./components/AdminControlHub";
 import { ResultsPage } from "./components/ResultsPage";
+import { PredictorHub } from "./components/PredictorHub";
 import { PrivacyPolicy } from "./components/PrivacyPolicy";
+import { ShiftVault } from "./components/ShiftVault";
+import { isAnswerCorrect } from "./utils/answerEvaluator";
 
 import { useFullscreen } from "./hooks/useFullscreen";
 import { useOrientation } from "./hooks/useOrientation";
 
-type AppStep = "LANDING" | "UPLOAD" | "CBT" | "ANALYTICS" | "ADMIN" | "RESULTS" | "PRIVACY";
+export type AppStep = "LANDING" | "VAULT" | "UPLOAD" | "CBT" | "ANALYTICS" | "ADMIN" | "RESULTS" | "PREDICTOR" | "PRIVACY";
+
+const STEP_TO_HASH: Record<AppStep, string> = {
+  LANDING: "#home",
+  VAULT: "#vault",
+  UPLOAD: "#practice",
+  CBT: "#cbt",
+  ANALYTICS: "#analytics",
+  RESULTS: "#results",
+  PREDICTOR: "#predictor",
+  ADMIN: "#admin",
+  PRIVACY: "#privacy",
+};
+
+const getStepFromHash = (): AppStep => {
+  if (typeof window === "undefined") return "LANDING";
+  const hash = window.location.hash.toLowerCase().replace(/^#\/?/, "");
+  switch (hash) {
+    case "vault":
+    case "shifts":
+    case "pyq":
+      return "VAULT";
+    case "upload":
+    case "practice":
+      return "UPLOAD";
+    case "cbt":
+    case "exam":
+      return "CBT";
+    case "analytics":
+    case "analysis":
+      return "ANALYTICS";
+    case "results":
+    case "history":
+      return "RESULTS";
+    case "predictor":
+    case "college":
+    case "josaa":
+      return "PREDICTOR";
+    case "admin":
+      return "ADMIN";
+    case "privacy":
+      return "PRIVACY";
+    case "home":
+    case "landing":
+      return "LANDING";
+    default: {
+      try {
+        const stored = sessionStorage.getItem("jee_active_step") as AppStep;
+        if (stored && ["LANDING", "VAULT", "UPLOAD", "CBT", "ANALYTICS", "RESULTS", "PREDICTOR", "ADMIN", "PRIVACY"].includes(stored)) {
+          return stored;
+        }
+      } catch {}
+      return "LANDING";
+    }
+  }
+};
 
 export default function App() {
-  const [step, setStep] = useState<AppStep>("LANDING");
+  const [step, setStep] = useState<AppStep>(getStepFromHash);
   const [testName, setTestName] = useState<string>("");
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [testState, setTestState] = useState<TestState | null>(null);
+  const [testState, setTestState] = useState<TestState | null>(() => {
+    try {
+      const saved = localStorage.getItem("jee_active_scorecard");
+      if (saved) return JSON.parse(saved);
+      const attempts = localStorage.getItem("jee_completed_attempts");
+      if (attempts) {
+        const parsedAttempts = JSON.parse(attempts);
+        if (Array.isArray(parsedAttempts) && parsedAttempts.length > 0 && parsedAttempts[0].testState) {
+          return parsedAttempts[0].testState;
+        }
+      }
+    } catch {}
+    return null;
+  });
   const [initialCbtState, setInitialCbtState] = useState<any>(null);
+
+  const navigateTo = (newStep: AppStep, replace = false) => {
+    const targetHash = STEP_TO_HASH[newStep] || "#home";
+    if (window.location.hash !== targetHash) {
+      if (replace) {
+        window.history.replaceState(null, "", targetHash);
+      } else {
+        window.history.pushState(null, "", targetHash);
+      }
+    }
+    try {
+      sessionStorage.setItem("jee_active_step", newStep);
+    } catch {}
+    setStep(newStep);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    const handleHashOrPopState = () => {
+      const nextStep = getStepFromHash();
+      setStep(nextStep);
+    };
+    window.addEventListener("hashchange", handleHashOrPopState);
+    window.addEventListener("popstate", handleHashOrPopState);
+    return () => {
+      window.removeEventListener("hashchange", handleHashOrPopState);
+      window.removeEventListener("popstate", handleHashOrPopState);
+    };
+  }, []);
+
+  useEffect(() => {
+    const targetHash = STEP_TO_HASH[step] || "#home";
+    if (window.location.hash !== targetHash) {
+      window.history.replaceState(null, "", targetHash);
+    }
+    try {
+      sessionStorage.setItem("jee_active_step", step);
+    } catch {}
+  }, [step]);
+
+  useEffect(() => {
+    if (testState) {
+      try {
+        localStorage.setItem("jee_active_scorecard", JSON.stringify(testState));
+      } catch (e) {
+        console.warn("Could not save active scorecard to localStorage:", e);
+      }
+    }
+  }, [testState]);
 
   // --- USER CALIBRATION PROFILE STATE ---
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
@@ -59,11 +198,14 @@ export default function App() {
     }
   });
   const [showWalletModal, setShowWalletModal] = useState(false);
-  const [walletModalTab, setWalletModalTab] = useState<"auth" | "wallet" | "admin" | "transactions" | "mailbox" | undefined>(undefined);
+  const [walletModalTab, setWalletModalTab] = useState<"auth" | "wallet" | "transactions" | "mailbox" | undefined>(undefined);
+  const [preselectedPackId, setPreselectedPackId] = useState<string | undefined>(undefined);
 
   // Screen controller and Landscape Recommendations via custom hooks
   const { isFullscreen, toggleFullscreen } = useFullscreen();
-  const { isPortraitMobile: showOrientationWarning } = useOrientation(800);
+  const { isPortraitMobile } = useOrientation(800);
+  const [isOrientationDismissed, setIsOrientationDismissed] = useState(false);
+  const showOrientationWarning = isPortraitMobile && !isOrientationDismissed;
   const [showFullscreenRecommend, setShowFullscreenRecommend] = useState(true);
 
   // Periodic background wallet sync to match header/modals credits perfectly
@@ -74,10 +216,23 @@ export default function App() {
         const res = await fetch(`/api/user/${userAccount.id}/wallet`);
         if (res.ok) {
           const data = await res.json();
-          if (data && data.credits !== undefined && data.credits !== userAccount.credits) {
-            const updatedAccount = { ...userAccount, credits: data.credits };
-            setUserAccount(updatedAccount);
-            localStorage.setItem("jee_user_account", JSON.stringify(updatedAccount));
+          if (data && data.credits !== undefined) {
+            const creditsChanged = data.credits !== userAccount.credits;
+            const passChanged = data.hasAllAccessPass !== undefined && data.hasAllAccessPass !== Boolean(userAccount.hasAllAccessPass);
+            if (creditsChanged || passChanged) {
+              const updatedAccount: UserAccount = {
+                ...userAccount,
+                credits: data.credits,
+                hasAllAccessPass: data.hasAllAccessPass ?? userAccount.hasAllAccessPass
+              };
+              setUserAccount(updatedAccount);
+              try {
+                localStorage.setItem("jee_user_account", JSON.stringify(updatedAccount));
+                if (updatedAccount.hasAllAccessPass || updatedAccount.role === "admin") {
+                  localStorage.setItem("jee_all_access_pass", "true");
+                }
+              } catch {}
+            }
           }
         }
       } catch (err) {
@@ -85,7 +240,7 @@ export default function App() {
       }
     }, 4500); // Sync every 4.5 seconds
     return () => clearInterval(interval);
-  }, [userAccount?.id, userAccount?.credits]);
+  }, [userAccount?.id, userAccount?.credits, userAccount?.hasAllAccessPass]);
 
   const handleRotateDevice = () => {
     try {
@@ -149,7 +304,10 @@ export default function App() {
   const [savedPapers, setSavedPapers] = useState<Array<{ id: string; testName: string; questions: Question[]; createdAt: string }>>(() => {
     try {
       const saved = localStorage.getItem("jee_saved_papers");
-      return saved ? JSON.parse(saved) : [];
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter((p: any) => p && typeof p.testName === "string" && Array.isArray(p.questions));
     } catch {
       return [];
     }
@@ -173,17 +331,47 @@ export default function App() {
     }
   });
 
-  // Check for active session when we enter step UPLOAD
+  // Check for active session whenever step changes or window regains focus
   useEffect(() => {
-    if (step === "UPLOAD") {
+    const checkActiveSession = () => {
       try {
         const saved = localStorage.getItem("jee_cbt_active_exam");
         setActiveSession(saved ? JSON.parse(saved) : null);
       } catch {
         setActiveSession(null);
       }
-    }
+    };
+    checkActiveSession();
+    window.addEventListener("focus", checkActiveSession);
+    return () => window.removeEventListener("focus", checkActiveSession);
   }, [step]);
+
+  // If candidate is on CBT view (or refreshed page on #cbt) and questions are not yet loaded:
+  useEffect(() => {
+    if (step === "CBT" && questions.length === 0) {
+      try {
+        const saved = localStorage.getItem("jee_cbt_active_exam");
+        if (saved) {
+          const session = JSON.parse(saved);
+          if (session && session.questions && session.questions.length > 0) {
+            setTestName(session.testName || "JEE Main Mock Test");
+            setQuestions(session.questions);
+            setInitialCbtState({
+              ...session.testState,
+              questions: session.questions,
+              currentSubject: session.currentSubject,
+              currentQuestionId: session.currentQuestionId,
+            });
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Failed restoring active session on load:", e);
+      }
+      // If no valid active session in storage, redirect cleanly to practice hub
+      navigateTo("UPLOAD", true);
+    }
+  }, [step, questions.length]);
 
   // Safety alert before unload on public devices
   useEffect(() => {
@@ -207,7 +395,7 @@ export default function App() {
 
     // Save this extracted paper to Saved Papers list if it isn't already there!
     setSavedPapers((prev) => {
-      const exists = prev.some((p) => p.testName.trim().toLowerCase() === name.trim().toLowerCase());
+      const exists = prev.some((p) => (p?.testName || "").trim().toLowerCase() === (name || "").trim().toLowerCase());
       if (exists) return prev;
 
       const newPaper = {
@@ -234,7 +422,7 @@ export default function App() {
 
   const handleTestSubmitted = (state: TestState) => {
     setTestState(state);
-    setStep("ANALYTICS");
+    navigateTo("ANALYTICS");
     setActiveSession(null);
     try {
       localStorage.removeItem("jee_cbt_active_exam");
@@ -265,7 +453,9 @@ export default function App() {
           minute: "2-digit",
         }),
         score,
-        maxScore: state.questions.length * 4,
+        maxScore: (state.questions.length === 90 || state.questions.some((q) => q.section === Section.B && q.questionNumber > 25))
+          ? 300
+          : state.questions.length * 4,
         testState: state,
       };
       const updated = [newAttempt, ...prev].slice(0, 15); // Store recent 15 attempts
@@ -281,9 +471,8 @@ export default function App() {
   const handleRestart = () => {
     setQuestions([]);
     setTestName("");
-    setTestState(null);
     setInitialCbtState(null);
-    setStep("UPLOAD");
+    navigateTo("UPLOAD");
   };
 
   // --- ACTIONS ---
@@ -303,7 +492,7 @@ export default function App() {
 
   const handleReviewPastAttempt = (attempt: { testState: TestState }) => {
     setTestState(attempt.testState);
-    setStep("ANALYTICS");
+    navigateTo("ANALYTICS");
   };
 
   const handleDeletePastAttempt = (id: string) => {
@@ -317,11 +506,23 @@ export default function App() {
   };
 
   const handleResumeActiveSession = () => {
-    if (activeSession) {
-      setTestName(activeSession.testName);
-      setQuestions(activeSession.questions);
-      setInitialCbtState(activeSession.testState); // pass saved response progress map
-      setStep("CBT");
+    let session = activeSession;
+    if (!session) {
+      try {
+        const saved = localStorage.getItem("jee_cbt_active_exam");
+        session = saved ? JSON.parse(saved) : null;
+      } catch {}
+    }
+    if (session) {
+      setTestName(session.testName || "JEE Main Mock Test");
+      setQuestions(session.questions);
+      setInitialCbtState({
+        ...session.testState,
+        questions: session.questions,
+        currentSubject: session.currentSubject,
+        currentQuestionId: session.currentQuestionId,
+      });
+      navigateTo("CBT");
     }
   };
 
@@ -334,8 +535,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-between select-none">
-      {/* PERSISTENT ROTATION RECOMMENDATION BANNER */}
-      {showOrientationWarning && (
+      {/* PERSISTENT ROTATION RECOMMENDATION BANNER - Only inside platform / exam */}
+      {showOrientationWarning && step !== "LANDING" && (
         <div className="bg-amber-950 text-amber-100 px-4 py-2.5 text-xs font-semibold border-b border-amber-800/60 flex items-center justify-between gap-3 animate-fade-in relative z-[100] shadow-sm shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-sm animate-bounce shrink-0">🔄</span>
@@ -353,7 +554,7 @@ export default function App() {
             </button>
             <button 
               type="button"
-              onClick={() => setShowOrientationWarning(false)}
+              onClick={() => setIsOrientationDismissed(true)}
               className="px-2 py-1 bg-white/10 hover:bg-white/20 text-white/90 text-[10px] rounded transition-colors cursor-pointer"
             >
               Dismiss
@@ -362,67 +563,133 @@ export default function App() {
         </div>
       )}
 
-      {/* RECOMMENDATION TO GO FULLSCREEN FOR LANDSCAPE TRUE SIMULATOR */}
-      {step !== "CBT" && step !== "LANDING" && !isFullscreen && showFullscreenRecommend && (
-        <div className="bg-gradient-to-r from-blue-900 to-indigo-950 text-white px-4 py-2.5 text-xs font-semibold border-b border-blue-800/60 flex items-center justify-between gap-3 animate-fade-in relative z-[100] shadow-sm shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm shrink-0 animate-pulse">🖥️</span>
-            <span>
-              <strong>Highly Recommended:</strong> Click <strong className="text-amber-300 font-extrabold underline decoration-amber-400">Go Fullscreen</strong> in the simulator header to run inside a true-to-life PC layout browser wrapper!
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold uppercase text-[10px] tracking-wider transition-all cursor-pointer rounded shadow-xs"
-            >
-              Go Fullscreen ⚡
-            </button>
-            <button 
-              type="button"
-              onClick={() => setShowFullscreenRecommend(false)}
-              className="px-2 py-1 bg-white/10 hover:bg-white/20 text-white/90 text-[10px] rounded transition-colors cursor-pointer"
-            >
-              Dismiss
-            </button>
-          </div>
-        </div>
-      )}
 
-      {/* GLOBAL BANNER HEADER WITH DUAL-LAYER NAVIGATION */}
+      {/* UNIFIED SAAS HEADER & NAVIGATION - Hidden on CBT & LANDING */}
       {step !== "CBT" && step !== "LANDING" && (
-        <div className="flex flex-col shrink-0 sticky top-0 z-50 shadow-md">
-          <header className="bg-[#1a3a5f] border-b border-slate-700/60 px-3 sm:px-6 py-2 sm:py-3.5 flex flex-row items-center justify-between select-none text-white">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="bg-white p-0.5 sm:p-1 rounded-sm shrink-0 shadow-sm">
-                <div className="w-7 h-7 sm:w-9 sm:h-9 bg-blue-100 flex items-center justify-center text-[#1a3a5f] font-bold text-[8px] sm:text-[10px] leading-tight text-center italic font-sans animate-pulse">
-                  JEE<br />MAIN
+        <div className="flex flex-col shrink-0 sticky top-0 z-50 shadow-xs">
+          <header className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-6 py-2.5 flex items-center justify-between gap-4 select-none">
+            {/* Left: Brand & Navigation */}
+            <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+              {/* Brand Logo & Name */}
+              <div 
+                className="flex items-center gap-2 cursor-pointer group shrink-0"
+                onClick={() => navigateTo("LANDING")}
+                title="Go to Home Portal"
+              >
+                <div className="w-8 h-8 rounded-xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-slate-200/80 flex items-center justify-center p-1.5 group-hover:scale-105 transition-transform">
+                  <div className="grid grid-cols-2 gap-0.5 w-full h-full">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />
+                  </div>
+                </div>
+                <div className="hidden xs:flex flex-col text-left leading-tight">
+                  <span className="font-extrabold text-xs sm:text-sm tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">JEE MockLab</span>
+                  <span className="text-[9px] text-slate-400 font-mono font-medium hidden sm:block">NTA CBT Platform</span>
                 </div>
               </div>
-              <div className="text-left leading-normal">
-                <h1 className="font-bold text-xs sm:text-sm tracking-tight text-white uppercase flex flex-wrap items-center gap-1 sm:gap-1.5">
-                  <span>JEE CBT Simulator</span>
-                  <span className="hidden xs:inline-block text-[8px] sm:text-[10px] text-blue-200 bg-blue-900/40 px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded border border-blue-500/30 font-bold font-mono uppercase tracking-wide">CBT Panel</span>
-                </h1>
-                <p className="hidden md:block text-[10px] text-slate-300 opacity-85 uppercase tracking-widest leading-none mt-1">PDF-to-Test AI Calibration & Simulator</p>
-              </div>
+
+              {/* Navigation Tabs */}
+              <nav className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
+                <button
+                  type="button"
+                  onClick={() => navigateTo("LANDING")}
+                  className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 cursor-pointer flex items-center gap-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border border-transparent"
+                >
+                  <Compass size={14} className="text-slate-400" />
+                  <span>Home</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => navigateTo("VAULT")}
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                    step === "VAULT"
+                      ? "bg-blue-50 text-blue-700 border border-blue-200/80 shadow-2xs font-bold"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border border-transparent"
+                  }`}
+                  id="nav_shift_vault_btn"
+                >
+                  <Sparkles size={14} className={step === "VAULT" ? "text-blue-600" : "text-slate-400"} />
+                  <span>Shift Vault</span>
+                  <span className="hidden sm:inline-block bg-blue-100/80 text-blue-700 text-[9px] font-bold px-1.5 py-0.2 rounded-full font-mono">60</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => navigateTo("UPLOAD")}
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                    step === "UPLOAD"
+                      ? "bg-blue-50 text-blue-700 border border-blue-200/80 shadow-2xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border border-transparent"
+                  }`}
+                >
+                  <FileUp size={14} className={step === "UPLOAD" ? "text-blue-600" : "text-slate-400"} />
+                  <span>Practice Hub</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => navigateTo("RESULTS")}
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                    step === "RESULTS"
+                      ? "bg-blue-50 text-blue-700 border border-blue-200/80 shadow-2xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border border-transparent"
+                  }`}
+                >
+                  <Award size={14} className={step === "RESULTS" ? "text-blue-600" : "text-slate-400"} />
+                  <span>Mock Results</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!testState && completedAttempts.length > 0) {
+                      setTestState(completedAttempts[0].testState);
+                    }
+                    navigateTo("ANALYTICS");
+                  }}
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                    step === "ANALYTICS"
+                      ? "bg-blue-50 text-blue-700 border border-blue-200/80 shadow-2xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border border-transparent"
+                  }`}
+                >
+                  <BarChart3 size={14} className={step === "ANALYTICS" ? "text-blue-600" : "text-slate-400"} />
+                  <span>Growth Analytics</span>
+                </button>
+              </nav>
             </div>
 
-            {/* Header Rightside controls */}
-            <div className="flex items-center gap-2 shrink-0 text-[10px] sm:text-[11px] font-semibold text-slate-200">
+            {/* Right: Quick Stats & Controls */}
+            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 text-xs font-medium">
+              {/* Quick stats indicators */}
+              <div className="hidden xl:flex items-center gap-2.5 text-xs text-slate-500 font-medium font-mono">
+                <div className="flex items-center gap-1.5">
+                  <BookOpen size={13} className="text-slate-400" />
+                  <span>Library: <strong className="text-slate-800 font-semibold">{savedPapers.length}</strong></span>
+                </div>
+                <span className="text-slate-200">|</span>
+                <div className="flex items-center gap-1.5">
+                  <Trophy size={13} className="text-amber-500" />
+                  <span>Attempts: <strong className="text-slate-800 font-semibold">{completedAttempts.length}</strong></span>
+                </div>
+                <div className="h-4 w-px bg-slate-200 ml-1" />
+              </div>
+
               {/* Admin Panel Button */}
               {userAccount && userAccount.role === "admin" && (
                 <button
                   type="button"
                   onClick={() => {
-                    setStep("ADMIN");
+                    navigateTo("ADMIN");
                   }}
-                  className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 border border-rose-500/40 text-white rounded text-[10px] font-extrabold cursor-pointer transition-all flex items-center gap-1 shadow-sm active:scale-95 whitespace-nowrap"
+                  className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center gap-1.5 shadow-2xs active:scale-95 whitespace-nowrap"
                   title="Open Admin Control Hub"
                   id="header_admin_panel_btn"
                 >
-                  <span className="animate-pulse">🛡️</span>
+                  <Shield size={13} className="text-rose-600" />
                   <span>Admin Hub</span>
                 </button>
               )}
@@ -434,16 +701,16 @@ export default function App() {
                   setWalletModalTab(userAccount?.role === "admin" ? "wallet" : undefined);
                   setShowWalletModal(true);
                 }}
-                className="px-2.5 py-1 bg-sky-650 hover:bg-sky-550 border border-sky-500/40 text-white rounded text-[10px] sm:text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+                className="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200/90 text-slate-700 hover:text-slate-900 rounded-xl text-xs font-bold cursor-pointer transition flex items-center gap-1.5 shadow-2xs active:scale-95 font-mono tabular-nums"
                 title="Manage mock parsing credits and account"
                 id="header_wallet_chip"
               >
-                <span className="text-amber-300">🪙</span>
+                <Coins size={13} className="text-amber-500" />
                 <span>
-                  {userAccount ? `${userAccount.credits} cr` : "Claim 3 Free Credits"}
+                  {userAccount ? `${userAccount.credits} credits` : "Claim 3 Free Credits"}
                 </span>
                 {userAccount && userAccount.role === "admin" && (
-                  <span className="ml-1 text-[8px] font-black text-rose-300 bg-rose-950/40 px-1 py-0.1 border border-rose-500/30 rounded">A</span>
+                  <span className="ml-0.5 text-[9px] font-black text-rose-700 bg-rose-100 px-1.5 py-0.5 border border-rose-200 rounded">Admin</span>
                 )}
               </button>
 
@@ -451,94 +718,86 @@ export default function App() {
               <button
                 type="button"
                 onClick={toggleFullscreen}
-                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 hover:text-white rounded text-[10px] sm:text-xs font-bold cursor-pointer transition-all flex items-center gap-1 shadow-xs"
+                className="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200/90 text-slate-600 hover:text-slate-900 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center gap-1.5 shadow-2xs active:scale-95"
                 title={isFullscreen ? "Exit Fullscreen Mode" : "Enter Fullscreen Mode"}
               >
-                {isFullscreen ? <Minimize size={12} className="text-amber-400" /> : <Maximize size={12} />}
+                {isFullscreen ? <Minimize size={13} className="text-amber-500" /> : <Maximize size={13} className="text-slate-500" />}
                 <span className="hidden sm:inline">{isFullscreen ? "Windowed" : "Fullscreen"}</span>
               </button>
 
               {/* Safe Wipe Cache */}
               <button
                 onClick={() => setShowSelfDestructConfirm(true)}
-                className="px-2.5 py-1 bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-200 hover:text-white rounded text-[10px] sm:text-xs font-bold cursor-pointer transition-all flex items-center gap-1"
+                className="px-2.5 py-1.5 bg-slate-50 hover:bg-rose-50 border border-slate-200/90 hover:border-rose-200 text-slate-500 hover:text-rose-600 rounded-xl text-xs font-semibold cursor-pointer transition flex items-center gap-1.5 shadow-2xs active:scale-95"
                 title="Clear cached test storage"
               >
-                <span>🧹 <span className="hidden sm:inline">Clear Cache</span></span>
+                <Trash2 size={13} />
+                <span className="hidden sm:inline">Clear Cache</span>
               </button>
             </div>
           </header>
 
-          {/* SECONDARY NAVIGATION BAR */}
-          <nav className="bg-white border-b border-slate-200 py-1.5 px-3 sm:px-6 flex items-center justify-between gap-4 select-none">
-            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={() => setStep("LANDING")}
-                className={`px-2.5 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1 sm:gap-2 transition shrink-0 cursor-pointer ${
-                  step === "LANDING"
-                    ? "bg-[#1a3a5f]/10 text-[#1a3a5f] font-extrabold"
-                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-                }`}
-              >
-                <span>🌐 <span className="hidden sm:inline">Home Portal</span><span className="inline sm:hidden">Home</span></span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStep("UPLOAD")}
-                className={`px-2.5 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1 sm:gap-2 transition shrink-0 cursor-pointer ${
-                  step === "UPLOAD"
-                    ? "bg-[#1a3a5f]/10 text-[#1a3a5f] font-extrabold"
-                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-                }`}
-              >
-                <span>📝 <span className="hidden sm:inline">Practice Hub</span><span className="inline sm:hidden">Mock Portal</span></span>
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => {
-                  if (!testState && completedAttempts.length > 0) {
-                    setTestState(completedAttempts[0].testState);
-                  }
-                  setStep("ANALYTICS");
-                }}
-                className={`px-2.5 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1 sm:gap-2 transition shrink-0 cursor-pointer ${
-                  step === "ANALYTICS"
-                    ? "bg-[#1a3a5f]/10 text-[#1a3a5f] font-extrabold"
-                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-                }`}
-              >
-                <span>📊 <span className="hidden sm:inline">Growth Analytics</span><span className="inline sm:hidden">Growth</span></span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStep("RESULTS")}
-                className={`px-2.5 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider flex items-center gap-1 sm:gap-2 transition shrink-0 cursor-pointer ${
-                  step === "RESULTS"
-                    ? "bg-[#1a3a5f]/10 text-[#1a3a5f] font-extrabold"
-                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-                }`}
-              >
-                <span>📈 <span className="hidden sm:inline">Mock Results</span><span className="inline sm:hidden">Results</span></span>
-              </button>
-            </div>
-
-            {/* Quick stats indicators */}
-            <div className="hidden sm:flex items-center gap-3 text-[11px] font-bold text-slate-500 font-mono shrink-0">
-              <div className="flex items-center gap-1 text-[#1a3a5f]">
-                <span>📚</span>
-                <span>Library: <strong className="text-slate-700 font-black">{savedPapers.length}</strong></span>
+          {/* PERSISTENT LIVE EXAM RECOVERY STRIP */}
+          {activeSession && (
+            <div className="bg-linear-to-r from-amber-50 via-amber-50/90 to-orange-50/80 border-b border-amber-200/80 text-amber-950 px-3 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                  <Zap size={14} className="fill-amber-500 text-amber-600 animate-pulse" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-full">Mock In Progress</span>
+                    <span className="text-xs font-bold text-slate-900 truncate max-w-[220px] sm:max-w-md">{activeSession.testName}</span>
+                  </div>
+                  <div className="text-[11px] text-amber-850 flex items-center gap-3 mt-0.5">
+                    <span>Remaining Time: <strong className="font-mono text-slate-900 font-bold">{Math.floor(activeSession.testState.timeLeft / 60)}m {activeSession.testState.timeLeft % 60}s</strong></span>
+                    <span>•</span>
+                    <span>{activeSession.questions.length} Questions</span>
+                  </div>
+                </div>
               </div>
-              <span className="text-slate-300">|</span>
-              <div className="flex items-center gap-1 text-indigo-750">
-                <span>🏆</span>
-                <span>Attempts: <strong className="text-slate-700 font-black">{completedAttempts.length}</strong></span>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleResumeActiveSession}
+                  className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-lg shadow-2xs transition-all cursor-pointer flex items-center gap-1 active:scale-95"
+                >
+                  <span>Resume Exam</span>
+                  <span>→</span>
+                </button>
+                {!showDiscardConfirm ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowDiscardConfirm(true)}
+                    className="px-2.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-250 text-slate-700 font-medium text-xs rounded-lg transition cursor-pointer"
+                  >
+                    Discard
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-200 px-2 py-1 rounded-lg">
+                    <span className="text-[10px] font-bold text-rose-700 uppercase">Discard?</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleDiscardActiveSession();
+                        setShowDiscardConfirm(false);
+                      }}
+                      className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] rounded cursor-pointer transition"
+                    >
+                      Yes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowDiscardConfirm(false)}
+                      className="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-[10px] rounded cursor-pointer transition"
+                    >
+                      No
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-          </nav>
+          )}
         </div>
       )}
 
@@ -555,12 +814,50 @@ export default function App() {
               className="w-full flex-1 flex flex-col justify-center"
             >
               <LandingPage 
-                onEnterPlatform={(viewStep) => setStep(viewStep || "UPLOAD")}
+                onEnterPlatform={(viewStep) => navigateTo(viewStep || "UPLOAD")}
                 savedPapersCount={savedPapers.length}
                 attemptsCount={completedAttempts.length}
                 userProfile={userProfile}
                 onEditProfile={() => setShowProfileWizard(true)}
-                onPrivacyClick={() => setStep("PRIVACY")}
+                onPrivacyClick={() => navigateTo("PRIVACY")}
+                activeSession={activeSession}
+                onResumeActiveSession={handleResumeActiveSession}
+              />
+            </motion.div>
+          )}
+
+          {step === "VAULT" && (
+            <motion.div
+              key="VAULT"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="w-full flex-1"
+            >
+              <ShiftVault
+                userAccount={userAccount}
+                onStartShiftTest={(shiftQuestions, title) => {
+                  setTestName(title);
+                  setQuestions(shiftQuestions);
+                  setInitialCbtState(null);
+                  navigateTo("CBT");
+                }}
+                onRequestRecharge={(packId) => {
+                  setWalletModalTab("wallet");
+                  setPreselectedPackId(packId || "all_access_pass");
+                  setShowWalletModal(true);
+                }}
+                onBackToHome={() => navigateTo("LANDING")}
+                onAccountUpdated={(updatedAcc) => {
+                  setUserAccount(updatedAcc);
+                  try {
+                    localStorage.setItem("jee_user_account", JSON.stringify(updatedAcc));
+                    if (updatedAcc.hasAllAccessPass || updatedAcc.role === "admin") {
+                      localStorage.setItem("jee_all_access_pass", "true");
+                    }
+                  } catch {}
+                }}
               />
             </motion.div>
           )}
@@ -574,78 +871,21 @@ export default function App() {
               transition={{ duration: 0.3 }}
               className="py-6 w-full flex-1"
             >
-            
-            {/* ACTIVE EXAMINATION RECOVERY BANNER */}
-            {activeSession && (
-              <div className="max-w-6xl w-full mx-auto mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm animate-pulse select-none text-left">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold shrink-0">
-                    📝
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-black text-amber-800 uppercase tracking-wider">Unfinished Offline Session Found</h4>
-                    <p className="font-bold text-slate-800 text-sm mt-0.5">{activeSession.testName}</p>
-                    <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-2">
-                      <span>⏰ Time Left: <span className="font-mono font-bold text-slate-700">{Math.floor(activeSession.testState.timeLeft / 60)} mins</span></span>
-                      <span>•</span>
-                      <span>💼 Extracted: <span className="font-bold text-slate-700">{activeSession.questions.length} Questions</span></span>
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2 shrink-0 select-none items-center">
-                  <button
-                    onClick={handleResumeActiveSession}
-                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 cursor-pointer text-white font-bold text-xs rounded transition flex items-center gap-1.5 shadow-md shadow-amber-600/10"
-                  >
-                    <span>Resume Live Exam</span>
-                    <span>→</span>
-                  </button>
-                  {!showDiscardConfirm ? (
-                    <button
-                      onClick={() => setShowDiscardConfirm(true)}
-                      className="px-3 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-xs font-bold text-slate-600 rounded cursor-pointer transition w-20"
-                    >
-                      Discard
-                    </button>
-                  ) : (
-                    <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 px-2 py-1 rounded-lg">
-                      <span className="text-[10px] font-extrabold text-red-600 uppercase">Sure?</span>
-                      <button
-                        onClick={() => {
-                          handleDiscardActiveSession();
-                          setShowDiscardConfirm(false);
-                        }}
-                        className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white font-extrabold text-[10px] rounded cursor-pointer transition"
-                      >
-                        Yes
-                      </button>
-                      <button
-                        onClick={() => setShowDiscardConfirm(false)}
-                        className="px-2 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-[10px] rounded cursor-pointer transition"
-                      >
-                        No
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <PdfUploader 
-              onTestLoaded={handleTestLoaded} 
-              userAccount={userAccount}
-              onRequestLogin={() => {
-                setWalletModalTab(undefined);
-                setShowWalletModal(true);
-              }}
-              onCreditsUpdated={(newCredits) => {
-                if (userAccount) {
-                  const updatedAccount = { ...userAccount, credits: newCredits };
-                  setUserAccount(updatedAccount);
-                  localStorage.setItem("jee_user_account", JSON.stringify(updatedAccount));
-                }
-              }}
-            />
+              <PdfUploader 
+                onTestLoaded={handleTestLoaded} 
+                userAccount={userAccount}
+                onRequestLogin={() => {
+                  setWalletModalTab(undefined);
+                  setShowWalletModal(true);
+                }}
+                onCreditsUpdated={(newCredits) => {
+                  if (userAccount) {
+                    const updatedAccount = { ...userAccount, credits: newCredits };
+                    setUserAccount(updatedAccount);
+                    localStorage.setItem("jee_user_account", JSON.stringify(updatedAccount));
+                  }
+                }}
+              />
 
             {/* PUBLIC DEVICE GUARD HUD ON HOME SCREEN */}
             <div className="max-w-6xl w-full mx-auto mt-6 px-4 select-none">
@@ -725,10 +965,10 @@ export default function App() {
                                       e.stopPropagation();
                                       setDeletePaperId(paper.id);
                                     }}
-                                    className="p-1 rounded text-slate-450 hover:text-red-600 hover:bg-red-50 cursor-pointer transition text-xs"
+                                    className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer transition text-xs flex items-center justify-center"
                                     title="Delete Saved Paper"
                                   >
-                                    🗑️
+                                    <Trash2 size={13} />
                                   </button>
                                 </>
                               ) : (
@@ -779,7 +1019,7 @@ export default function App() {
                             (Object.keys(attempt.testState.userResponses).filter(
                               (qId) => {
                                 const qObj = attempt.testState.questions.find((q) => q.id === qId);
-                                return qObj && String(attempt.testState.userResponses[qId]).trim().toUpperCase() === String(qObj.correctAnswer).trim().toUpperCase();
+                                return qObj && isAnswerCorrect(attempt.testState.userResponses[qId], qObj.correctAnswer, qObj.section);
                               }
                             ).length / Math.max(Object.keys(attempt.testState.userResponses).length, 1)) * 100
                           ) : 0;
@@ -926,7 +1166,7 @@ export default function App() {
               ) : (
                 <div className="mt-8 flex justify-center gap-3">
                   <button
-                    onClick={() => setStep("UPLOAD")}
+                    onClick={() => navigateTo("UPLOAD")}
                     className="px-4 py-2 bg-[#1a3a5f] text-white font-bold text-xs rounded-lg transition shrink-0 cursor-pointer"
                   >
                     Go Upload PDF
@@ -951,9 +1191,31 @@ export default function App() {
               userProfile={userProfile}
               onSelectAttempt={(attemptState) => {
                 setTestState(attemptState);
-                setStep("ANALYTICS");
+                navigateTo("ANALYTICS");
               }}
-              onSetStep={(newStep) => setStep(newStep)}
+              onSetStep={(newStep) => navigateTo(newStep)}
+            />
+          </motion.div>
+        )}
+
+        {step === "PREDICTOR" && (
+          <motion.div
+            key="PREDICTOR"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.25 }}
+            className="w-full flex-1"
+          >
+            <PredictorHub
+              completedAttempts={completedAttempts}
+              onSelectAttempt={(attempt) => {
+                setTestState(attempt.testState);
+                navigateTo("ANALYTICS");
+              }}
+              savedPapersCount={savedPapers.length}
+              userProfile={userProfile}
+              onEditProfile={() => setShowProfileWizard(true)}
             />
           </motion.div>
         )}
@@ -972,9 +1234,9 @@ export default function App() {
               onLogout={() => {
                 setUserAccount(null);
                 localStorage.removeItem("jee_user_account");
-                setStep("LANDING");
+                navigateTo("LANDING");
               }}
-              onClose={() => setStep("LANDING")}
+              onClose={() => navigateTo("LANDING")}
             />
           </motion.div>
         )}
@@ -987,7 +1249,7 @@ export default function App() {
             exit={{ opacity: 0, scale: 0.98, y: -15 }}
             className="w-full flex-1"
           >
-            <PrivacyPolicy onBack={() => setStep("LANDING")} />
+            <PrivacyPolicy onBack={() => navigateTo("LANDING")} />
           </motion.div>
         )}
         </AnimatePresence>
@@ -1083,7 +1345,7 @@ export default function App() {
           </div>
           <div className="flex gap-4 font-semibold text-slate-400 shrink-0 items-center">
             <button
-              onClick={() => setStep("PRIVACY")}
+              onClick={() => navigateTo("PRIVACY")}
               className="hover:text-slate-600 hover:underline cursor-pointer transition-colors"
               id="global_footer_privacy_btn"
             >
@@ -1108,7 +1370,7 @@ export default function App() {
             setTestName(auditData.name);
             setQuestions(auditData.questions);
             setInitialCbtState(null);
-            setStep("CBT");
+            navigateTo("CBT");
             setActiveSession(null); // dismiss previous
           }}
           onCancel={() => {
@@ -1132,15 +1394,27 @@ export default function App() {
           <WalletAndAuth
             userAccount={userAccount}
             initialTab={walletModalTab}
+            initialPackId={preselectedPackId}
             onLogin={(account) => {
               setUserAccount(account);
-              localStorage.setItem("jee_user_account", JSON.stringify(account));
+              try {
+                localStorage.setItem("jee_user_account", JSON.stringify(account));
+                if (account.hasAllAccessPass || account.role === "admin") {
+                  localStorage.setItem("jee_all_access_pass", "true");
+                }
+              } catch {}
             }}
             onLogout={() => {
               setUserAccount(null);
-              localStorage.removeItem("jee_user_account");
+              try {
+                localStorage.removeItem("jee_user_account");
+                localStorage.removeItem("jee_all_access_pass");
+              } catch {}
             }}
-            onClose={() => setShowWalletModal(false)}
+            onClose={() => {
+              setShowWalletModal(false);
+              setPreselectedPackId(undefined);
+            }}
           />
         )}
       </AnimatePresence>

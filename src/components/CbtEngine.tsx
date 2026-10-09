@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion } from "motion/react";
-import { Clock, User, Eye, Info, HelpCircle, GraduationCap, ChevronLeft, ChevronRight, AlertTriangle, Send, Maximize, Minimize, Keyboard, Layers } from "lucide-react";
+import { Clock, User, Eye, Info, HelpCircle, GraduationCap, ChevronLeft, ChevronRight, AlertTriangle, Send, Maximize, Minimize, Keyboard, Layers, Pause, Monitor, Image as ImageIcon, CheckCircle2, XCircle } from "lucide-react";
 import { Question, Subject, Section, QuestionStatus, TestState } from "../types";
 import { MarkdownMath } from "./MathText";
 import { VirtualKeyboard } from "./VirtualKeyboard";
@@ -63,16 +63,32 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
 
   // Input buffer specifically for NAT questions (Section B)
   const [natInputValue, setNatInputValue] = useState<string>("");
+  const [showPauseModal, setShowPauseModal] = useState<boolean>(false);
 
   // Modals
   const [modalType, setModalType] = useState<"instructions" | "questionPaper" | "submitConfirm" | null>(null);
-
-  // Active question ref/timer
-  const activeQuestionIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [secBAlertMessage, setSecBAlertMessage] = useState<string | null>(null);
 
   // Filtered questions for active subject
   const subjectQuestions = questions.filter((q) => q.subject === currentSubject);
   const activeQuestion = questions.find((q) => q.id === currentQuestionId) || subjectQuestions[0];
+
+  // Determine if this paper has legacy 90-question structure (Section B has > 5 questions per subject)
+  const isLegacySecB = useMemo(() => {
+    return questions.some((q) => q.section === Section.B && q.questionNumber > 25);
+  }, [questions]);
+
+  // Count answered questions in active subject's Section B
+  const activeSubjectSecBAnsweredCount = useMemo(() => {
+    if (!activeQuestion) return 0;
+    return questions.filter(
+      (q) =>
+        q.subject === activeQuestion.subject &&
+        q.section === Section.B &&
+        !!userResponses[q.id] &&
+        userResponses[q.id].trim() !== ""
+    ).length;
+  }, [questions, activeQuestion, userResponses]);
 
   // --- INITIALIZATION ---
   useEffect(() => {
@@ -105,15 +121,24 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
     }
   }, [questions, initialState]);
 
-  // --- LOCAL PERSISTENCE AUTO-SAVE EFFECT ---
+  // --- LOCAL PERSISTENCE AUTO-SAVE EFFECT WITH QUOTA PROTECTION ---
   useEffect(() => {
     if (!questions || questions.length === 0) return;
-    
+
+    // Prune excessive data URIs (>50KB) to prevent hitting browser 5MB localStorage limits
+    const sanitizedQuestions = questions.map((q) => {
+      if (q.diagramImage && q.diagramImage.length > 50000) {
+        const { diagramImage, ...rest } = q;
+        return rest as Question;
+      }
+      return q;
+    });
+
     const activeSession = {
       testName,
-      questions,
+      questions: sanitizedQuestions,
       testState: {
-        questions,
+        questions: [], // Avoid duplicating 75 question objects in JSON
         userResponses,
         questionStatuses,
         timeSpent,
@@ -124,10 +149,21 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
       currentSubject,
       currentQuestionId,
     };
+
     try {
       localStorage.setItem("jee_cbt_active_exam", JSON.stringify(activeSession));
     } catch (e) {
-      console.warn("Could not auto-save in-progress exam state to localStorage:", e);
+      // Secondary fallback: strip all diagram images if still hitting quota
+      try {
+        const strippedQuestions = questions.map(({ diagramImage, ...rest }) => rest as Question);
+        const minimalSession = {
+          ...activeSession,
+          questions: strippedQuestions,
+        };
+        localStorage.setItem("jee_cbt_active_exam", JSON.stringify(minimalSession));
+      } catch (fallbackErr) {
+        console.warn("Storage quota full; could not auto-save in-progress exam state:", fallbackErr);
+      }
     }
   }, [testName, questions, userResponses, questionStatuses, timeSpent, timeLeft, currentSubject, currentQuestionId]);
 
@@ -139,59 +175,78 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
   }, [activeQuestion, userResponses]);
 
   // --- TIME MANAGEMENT ---
-  // Main countdown timer
+  // References to keep timer accurate even when backgrounded or throttled
+  const timeLeftRef = useRef<number>(timeLeft);
+  timeLeftRef.current = timeLeft;
+
+  const isPausedRef = useRef<boolean>(showPauseModal);
+  isPausedRef.current = showPauseModal;
+
+  const examEndTimeRef = useRef<number>(Date.now() + timeLeft * 1000);
+  const lastQuestionTickRef = useRef<number>(Date.now());
+  const handleSubmitRef = useRef<() => void>(() => {});
+
+  // Re-anchor timestamps when unpausing
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleSubmitTest(); // Auto submit when time runs out!
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
+    if (!showPauseModal) {
+      examEndTimeRef.current = Date.now() + timeLeftRef.current * 1000;
+      lastQuestionTickRef.current = Date.now();
+    }
+  }, [showPauseModal]);
+
+  // Main countdown timer anchored to Date.now() absolute timestamps
+  // Prevents background browser tab throttling from freezing or delaying exam timer
+  useEffect(() => {
+    const syncTimer = () => {
+      if (isPausedRef.current) return;
+      const remaining = Math.max(0, Math.round((examEndTimeRef.current - Date.now()) / 1000));
+      setTimeLeft(remaining);
+      if (remaining <= 0) {
+        handleSubmitRef.current();
+      }
+    };
+
+    const timer = setInterval(syncTimer, 1000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncTimer();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", syncTimer);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", syncTimer);
+    };
   }, []);
 
-  // Increment timeSpent on the current active question every second
+  // Synchronize question time tick anchor on question switch, modal toggle, or pause
   useEffect(() => {
-    if (!currentQuestionId || modalType !== null) return;
+    lastQuestionTickRef.current = Date.now();
+  }, [currentQuestionId, modalType, showPauseModal]);
+
+  // Increment timeSpent on the current active question using timestamp deltas to prevent background drift
+  useEffect(() => {
+    if (!currentQuestionId || modalType !== null || showPauseModal) return;
 
     const interval = setInterval(() => {
-      setTimeSpent((prev) => ({
-        ...prev,
-        [currentQuestionId]: (prev[currentQuestionId] || 0) + 1,
-      }));
+      const now = Date.now();
+      const elapsedSec = Math.floor((now - lastQuestionTickRef.current) / 1000);
+      if (elapsedSec >= 1) {
+        setTimeSpent((prev) => ({
+          ...prev,
+          [currentQuestionId]: (prev[currentQuestionId] || 0) + elapsedSec,
+        }));
+        lastQuestionTickRef.current = now;
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [currentQuestionId, modalType]);
-
-  // Auto-save active examination progress to localStorage for crash resilience
-  useEffect(() => {
-    if (!testName || questions.length === 0) return;
-    try {
-      const activeData = {
-        testName,
-        questions,
-        testState: {
-          questions,
-          userResponses,
-          questionStatuses,
-          timeSpent,
-          timeLeft,
-          isCompleted: false,
-          testName,
-        },
-        currentSubject,
-        currentQuestionId,
-      };
-      localStorage.setItem("jee_cbt_active_exam", JSON.stringify(activeData));
-    } catch (e) {
-      console.warn("Unable to sync active test state to storage:", e);
-    }
-  }, [testName, questions, userResponses, questionStatuses, timeSpent, timeLeft, currentSubject, currentQuestionId]);
+  }, [currentQuestionId, modalType, showPauseModal]);
 
   // --- KEYBOARD SHORTCUTS CONTROLLER ---
   useEffect(() => {
@@ -423,6 +478,15 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
     const responseToSave = activeQuestion.section === Section.B ? natInputValue.trim() : userResponses[activeQuestion.id];
 
     if (responseToSave) {
+      // Check Section B 5-attempt limit for legacy 90-question papers
+      if (activeQuestion.section === Section.B && isLegacySecB) {
+        const isAlreadyAnswered = !!userResponses[activeQuestion.id] && userResponses[activeQuestion.id].trim() !== "";
+        if (!isAlreadyAnswered && activeSubjectSecBAnsweredCount >= 5) {
+          setSecBAlertMessage(`You have already answered 5 questions in Section B of ${activeQuestion.subject}. Under the JEE 2024 Legacy pattern, you are permitted to attempt only 5 out of the 10 numerical questions per subject. To attempt this question, please navigate to one of your previously answered Section B questions and clear its response.`);
+          return;
+        }
+      }
+
       // Save final response in record
       if (activeQuestion.section === Section.B) {
         setUserResponses((prev) => ({
@@ -462,6 +526,15 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
     const hasAnswer = activeQuestion.section === Section.B ? natInputValue.trim() !== "" : !!userResponses[activeQuestion.id];
 
     if (hasAnswer) {
+      // Check Section B 5-attempt limit for legacy 90-question papers
+      if (activeQuestion.section === Section.B && isLegacySecB) {
+        const isAlreadyAnswered = !!userResponses[activeQuestion.id] && userResponses[activeQuestion.id].trim() !== "";
+        if (!isAlreadyAnswered && activeSubjectSecBAnsweredCount >= 5) {
+          setSecBAlertMessage(`You have already answered 5 questions in Section B of ${activeQuestion.subject}. Under the JEE 2024 Legacy pattern, you are permitted to attempt only 5 out of the 10 numerical questions per subject. To attempt this question, please navigate to one of your previously answered Section B questions and clear its response.`);
+          return;
+        }
+      }
+
       // Save and Mark for Review (purple with green check)
       if (activeQuestion.section === Section.B) {
         setUserResponses((prev) => ({
@@ -498,35 +571,36 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
       userResponses,
       questionStatuses,
       timeSpent,
-      timeLeft,
+      timeLeft: timeLeftRef.current,
       isCompleted: true,
       testName,
     });
   };
+  handleSubmitRef.current = handleSubmitTest;
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans select-none antialiased">
       {/* RECOMMENDATION TO GO FULLSCREEN FOR LANDSCAPE TRUE SIMULATOR */}
       {!isFullscreen && showFullscreenRecommend && (
-        <div className="bg-gradient-to-r from-blue-900 to-indigo-950 text-white px-4 py-2.5 text-xs font-semibold border-b border-blue-800/60 flex items-center justify-between gap-3 animate-fade-in relative z-[100] shadow-sm shrink-0">
+        <div className="bg-slate-900 text-white px-4 py-2.5 text-xs font-semibold border-b border-slate-800 flex items-center justify-between gap-3 animate-fade-in relative z-[100] shadow-xs shrink-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm shrink-0 animate-pulse">🖥️</span>
-            <span>
-              <strong>Highly Recommended:</strong> Click <strong className="text-amber-300 font-extrabold underline decoration-amber-400">Go Fullscreen</strong> below or toggle in the header to run this mock test exactly as presented at authentic NTA CBT terminal centers!
+            <Monitor size={15} className="text-blue-400 shrink-0" />
+            <span className="text-slate-200">
+              <strong className="text-white">Authentic CBT Mode:</strong> Switch to <strong className="text-blue-300 font-extrabold underline decoration-blue-400 cursor-pointer" onClick={toggleFullscreen}>Fullscreen</strong> for the exact 1:1 view tested in NTA exam centers.
             </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold uppercase text-[10px] tracking-wider transition-all cursor-pointer rounded shadow-xs"
+              className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer rounded shadow-xs"
             >
-              Go Fullscreen ⚡
+              Enter Fullscreen
             </button>
             <button 
               type="button"
               onClick={() => setShowFullscreenRecommend(false)}
-              className="px-2 py-1 bg-white/10 hover:bg-white/20 text-white/90 text-[10px] rounded transition-colors cursor-pointer"
+              className="px-2 py-1 bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white text-[10px] rounded transition-colors cursor-pointer"
             >
               Dismiss
             </button>
@@ -555,6 +629,17 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
 
         {/* TIME BAR */}
         <div className="flex items-center gap-2 sm:gap-6 shrink-0">
+          {/* Pause Exam Button */}
+          <button
+            type="button"
+            onClick={() => setShowPauseModal(true)}
+            className="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 hover:text-white rounded text-[8px] sm:text-[10px] font-bold cursor-pointer transition-all flex items-center gap-1 shadow-xs shrink-0"
+            title="Pause exam and return to dashboard"
+          >
+            <Pause size={10} />
+            <span className="hidden xs:inline">Pause</span>
+          </button>
+
           {/* Authentic Fullscreen switch toggle */}
           <button
             type="button"
@@ -640,6 +725,13 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
                     {activeQuestion.topic}
                   </span>
                 )}
+                {activeQuestion?.section === Section.B && (
+                  <span className="hidden xs:inline-flex text-[10px] font-bold px-2 py-0.5 rounded border bg-amber-50 text-amber-800 border-amber-200">
+                    {isLegacySecB 
+                      ? `Section B • Attempt 5 of 10 (${activeSubjectSecBAnsweredCount}/5 Attempted)`
+                      : `Section B • All 5 Mandatory (${activeSubjectSecBAnsweredCount}/5 Answered)`}
+                  </span>
+                )}
               </div>
 
               <div className="flex items-center gap-3">
@@ -671,6 +763,21 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
                 <div className="font-medium text-[14px]">
                   <MarkdownMath text={activeQuestion.questionText} />
                 </div>
+
+                {/* Cropped High-Res Vector Diagram (if detected) */}
+                {(activeQuestion.diagramImage || (activeQuestion as any).diagramUrl) && (
+                  <div className="my-3 p-3 bg-slate-50/80 border border-slate-200/80 rounded-xl max-w-xl shadow-2xs">
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5 select-none">
+                      <ImageIcon size={13} className="text-slate-500" />
+                      <span>Diagram / Figure Reference</span>
+                    </div>
+                    <img
+                      src={activeQuestion.diagramImage || (activeQuestion as any).diagramUrl}
+                      alt={`Diagram for Question ${activeQuestion.questionNumber}`}
+                      className="max-h-72 w-auto object-contain mx-auto rounded-lg border border-slate-200 bg-white p-1"
+                    />
+                  </div>
+                )}
 
                 {/* Input Fields */}
                 <div className="pt-6 border-t border-slate-100">
@@ -998,13 +1105,28 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
               </p>
 
               {/* Counts checklist summary */}
-              <div className="mt-4 bg-slate-50 border border-slate-200 p-3 rounded-lg text-xs leading-relaxed text-slate-600 select-text">
-                <div className="font-bold text-slate-800 text-[11px] mb-1.5 uppercase">Test Checklist Summary:</div>
-                <div className="grid grid-cols-2 gap-y-1 gap-x-3 text-left pl-2">
-                  <div>✔ Answered: <span className="font-bold text-emerald-600">{getStatusCount(QuestionStatus.ANSWERED) + getStatusCount(QuestionStatus.ANSWERED_AND_MARKED_FOR_REVIEW)}</span></div>
-                  <div>🔲 Marked (Not evaluated): <span className="font-bold text-indigo-500">{getStatusCount(QuestionStatus.MARKED_FOR_REVIEW)}</span></div>
-                  <div>✘ Unanswered: <span className="font-bold text-red-500">{getStatusCount(QuestionStatus.NOT_ANSWERED)}</span></div>
-                  <div>⚪ Not Visited: <span className="font-bold text-slate-400">{getStatusCount(QuestionStatus.NOT_VISITED)}</span></div>
+              <div className="mt-4 bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs leading-relaxed text-slate-600 select-text">
+                <div className="font-bold text-slate-800 text-[11px] mb-2 uppercase tracking-wider flex items-center justify-between">
+                  <span>Candidate Responses Summary</span>
+                  <span className="text-[10px] font-mono text-slate-400">Total: {questions.length} Qs</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-left">
+                  <div className="flex items-center gap-2 p-1.5 bg-white border border-slate-200/80 rounded-lg">
+                    <span className="w-4 h-4 rounded-xs bg-emerald-600 text-white font-mono text-[9px] font-bold flex items-center justify-center shrink-0">✓</span>
+                    <span className="text-slate-700 font-medium truncate">Answered: <strong className="font-mono text-emerald-700">{getStatusCount(QuestionStatus.ANSWERED) + getStatusCount(QuestionStatus.ANSWERED_AND_MARKED_FOR_REVIEW)}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-2 p-1.5 bg-white border border-slate-200/80 rounded-lg">
+                    <span className="w-4 h-4 rounded-xs bg-purple-600 text-white font-mono text-[9px] font-bold flex items-center justify-center shrink-0">?</span>
+                    <span className="text-slate-700 font-medium truncate">Marked Review: <strong className="font-mono text-purple-700">{getStatusCount(QuestionStatus.MARKED_FOR_REVIEW)}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-2 p-1.5 bg-white border border-slate-200/80 rounded-lg">
+                    <span className="w-4 h-4 rounded-xs bg-rose-600 text-white font-mono text-[9px] font-bold flex items-center justify-center shrink-0">✕</span>
+                    <span className="text-slate-700 font-medium truncate">Unanswered: <strong className="font-mono text-rose-700">{getStatusCount(QuestionStatus.NOT_ANSWERED)}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-2 p-1.5 bg-white border border-slate-200/80 rounded-lg">
+                    <span className="w-4 h-4 rounded-xs bg-slate-300 text-slate-700 font-mono text-[9px] font-bold flex items-center justify-center shrink-0">-</span>
+                    <span className="text-slate-700 font-medium truncate">Not Visited: <strong className="font-mono text-slate-500">{getStatusCount(QuestionStatus.NOT_VISITED)}</strong></span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1021,6 +1143,69 @@ export function CbtEngine({ testName, questions, onTestSubmit, onExit, initialSt
                 className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded transition shadow shadow-emerald-600/20 cursor-pointer"
               >
                 Yes, Submit Exam
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PAUSE EXAM MODAL */}
+      {showPauseModal && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center z-50 p-4 select-none">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-scale-up text-left space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 font-bold shrink-0">
+                <Pause size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-800">Pause Mock Exam?</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Your timer and question responses are saved.</p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+              You have <strong>{formatTime(timeLeft)}</strong> remaining and answered <strong>{Object.keys(userResponses).length} questions</strong>. You can resume this exam anytime from the practice dashboard.
+            </p>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowPauseModal(false)}
+                className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer"
+              >
+                Continue Exam
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPauseModal(false);
+                  onExit();
+                }}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-xs"
+              >
+                Pause & Exit to Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SECTION B ATTEMPT LIMIT ALERT MODAL */}
+      {secBAlertMessage && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full border border-slate-200 animate-scale-up">
+            <div className="flex items-center gap-3 mb-3 text-amber-600">
+              <AlertTriangle size={24} />
+              <h3 className="font-bold text-slate-900 text-sm">Section B Attempt Limit Reached</h3>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed mb-6">
+              {secBAlertMessage}
+            </p>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSecBAlertMessage(null)}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl cursor-pointer transition shadow-xs"
+              >
+                Understood
               </button>
             </div>
           </div>

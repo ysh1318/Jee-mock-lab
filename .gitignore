@@ -7,3 +7,12 @@ coverage/
 .env*
 !.env.example
 local_db_fallback.json
+*.sqlite
+*.sqlite3
+*.db
+database.sqlite
+jee mains shifts raw pdfs/
+scratch/
+__pycache__/
+*.pyc
+

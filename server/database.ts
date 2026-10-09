@@ -176,10 +176,17 @@ async function syncLocalDataToFirestore() {
             await docRef.set(user);
             syncCount++;
           } else {
-            // Merge to preserve whichever has more credits
+            // Merge to preserve whichever has more credits and hasAllAccessPass
             const cloudUser = docSnap.data() as any;
+            const updates: any = {};
             if (user.credits > (cloudUser.credits || 0)) {
-              await docRef.set({ credits: user.credits }, { merge: true });
+              updates.credits = user.credits;
+            }
+            if (user.hasAllAccessPass && !cloudUser.hasAllAccessPass) {
+              updates.hasAllAccessPass = true;
+            }
+            if (Object.keys(updates).length > 0) {
+              await docRef.set(updates, { merge: true });
               syncCount++;
             }
           }
@@ -326,11 +333,18 @@ async function saveSystemConfigToDb(config: any): Promise<void> {
 }
 
 async function getTierInfo(pack: string): Promise<{ price: number; credits: number }> {
+  if (pack === "all_access_pass") {
+    return {
+      price: 199,
+      credits: 0
+    };
+  }
   const config = await getSystemConfigFromDb();
   const defaultTiers = [
     { id: "2_credits", credits: 2, amount: 29 },
     { id: "5_credits", credits: 5, amount: 59 },
-    { id: "10_credits", credits: 10, amount: 99 }
+    { id: "10_credits", credits: 10, amount: 99 },
+    { id: "all_access_pass", credits: 0, amount: 199 }
   ];
   const tiers = config?.pricingTiers || defaultTiers;
   const tier = tiers.find((t: any) => t.id === pack);
@@ -992,14 +1006,33 @@ export const dbService = {
     }
 
     try {
+      if (!db) {
+        throw new Error("Firestore not initialized");
+      }
       const docSnap = await db.collection("users").doc(userId).get();
-      if (!docSnap.exists) return null;
+      if (!docSnap.exists) {
+        const local = loadLocalDb();
+        const localUser = local.users?.[userId];
+        if (localUser) {
+          const { passwordHash: _, ...userWithoutPassword } = localUser;
+          return userWithoutPassword;
+        }
+        return null;
+      }
 
       const user = docSnap.data() as UserAccount & { passwordHash?: string };
       const { passwordHash: _, ...userWithoutPassword } = user;
       return userWithoutPassword;
     } catch (err) {
-      console.error(`Firestore getUser(${userId}) failure:`, err);
+      console.warn(`Firestore getUser(${userId}) encountered issue, resolving from local database:`, (err as any)?.message || err);
+      try {
+        const local = loadLocalDb();
+        const localUser = local.users?.[userId];
+        if (localUser) {
+          const { passwordHash: _, ...userWithoutPassword } = localUser;
+          return userWithoutPassword;
+        }
+      } catch {}
       return null;
     }
   },
@@ -1148,145 +1181,83 @@ export const dbService = {
 
       return result;
     } catch (err: any) {
-      console.error(`Firestore deductCredit(${userId}) failure:`, err);
-      return { success: false, creditsLeft: 0, error: err.message };
+      console.warn(`Firestore deductCredit(${userId}) failure, falling back to local database:`, err.message);
+      try {
+        const local = loadLocalDb();
+        const user = local.users[userId];
+        if (!user) {
+          return { success: false, creditsLeft: 0, error: "User profile not found." };
+        }
+        if (user.credits < 1) {
+          return { success: false, creditsLeft: 0, error: "INSUFFICIENT CREDITS: Please purchase a recharge pack to continue parsing mock PDFs!" };
+        }
+        const nextCredits = user.credits - 1;
+        user.credits = nextCredits;
+        local.users[userId] = user;
+        saveLocalDb(local);
+        return { success: true, creditsLeft: nextCredits };
+      } catch (localErr: any) {
+        return { success: false, creditsLeft: 0, error: localErr.message };
+      }
     }
   },
 
-  async createPurchaseRequest(userId: string, pack: string, utrNumber: string): Promise<{ purchase: PurchaseRequest; error?: string }> {
+  async purchaseAllAccessPass(userId: string): Promise<{ success: boolean; user?: UserAccount; error?: string }> {
     if (useFallbackMode) {
       try {
         const local = loadLocalDb();
         const user = local.users[userId];
         if (!user) {
-          return { purchase: null as any, error: "User account not found." };
+          return { success: false, error: "User account not found." };
         }
 
-        const isDuplicate = Object.values(local.purchaseRequests).some(
-          p => p.utrNumber === utrNumber.trim() && p.status !== "declined"
-        );
-        if (isDuplicate) {
-          return { purchase: null as any, error: "This Reference / UTR Number has already been submitted for verification." };
+        if (user.hasAllAccessPass) {
+          const { passwordHash: _, salt: __, ...userWithoutPassword } = user;
+          return { success: true, user: userWithoutPassword };
         }
 
-        const tier = await getTierInfo(pack);
-        const price = tier.price;
-        const purchaseId = "req_" + Math.random().toString(36).substring(2, 11);
-
-        const now = new Date();
-        const expiresAt = new Date();
-        expiresAt.setDate(now.getDate() + 30);
-
-        const newRequest: PurchaseRequest = {
-          id: purchaseId,
-          userId: userId,
-          userEmail: user.email,
-          pack,
-          amount: price,
-          utrNumber: utrNumber.trim(),
-          status: "verifying",
-          purchaseDate: now.toISOString(),
-          expiresAt: expiresAt.toISOString(),
-        };
-
-        local.purchaseRequests[purchaseId] = newRequest;
-        saveLocalDb(local);
-        return { purchase: newRequest };
-      } catch (err: any) {
-        return { purchase: null as any, error: err.message };
-      }
-    }
-
-    try {
-      const userSnap = await db.collection("users").doc(userId).get();
-      if (!userSnap.exists) {
-        return { purchase: null as any, error: "User account not found." };
-      }
-      const user = userSnap.data() as UserAccount;
-
-      // Verify duplicate UTR
-      const duplicateQuery = await db.collection("purchaseRequests")
-        .where("utrNumber", "==", utrNumber.trim())
-        .get();
-      
-      const isDuplicate = duplicateQuery.docs.some(doc => doc.data().status !== "declined");
-      if (isDuplicate) {
-        return { purchase: null as any, error: "This Reference / UTR Number has already been submitted for verification." };
-      }
-
-      const tier = await getTierInfo(pack);
-      const price = tier.price;
-      const purchaseId = "req_" + Math.random().toString(36).substring(2, 11);
-
-      const now = new Date();
-      const expiresAt = new Date();
-      expiresAt.setDate(now.getDate() + 30); // 30-day expiration
-
-      const newRequest: PurchaseRequest = {
-        id: purchaseId,
-        userId: userId,
-        userEmail: user.email,
-        pack,
-        amount: price,
-        utrNumber: utrNumber.trim(),
-        status: "verifying", // Starts in verifying state
-        purchaseDate: now.toISOString(),
-        expiresAt: expiresAt.toISOString(),
-      };
-
-      await db.collection("purchaseRequests").doc(purchaseId).set(newRequest);
-      return { purchase: newRequest };
-    } catch (err: any) {
-      console.error("Firestore createPurchaseRequest failure:", err);
-      return { purchase: null as any, error: `Lead submission failure: ${err.message}` };
-    }
-  },
-
-  async approvePurchase(requestId: string): Promise<{ success: boolean; user?: UserAccount; error?: string }> {
-    if (useFallbackMode) {
-      try {
-        const local = loadLocalDb();
-        const purchase = local.purchaseRequests[requestId];
-        if (!purchase) {
-          return { success: false, error: "Purchase request not found." };
-        }
-        if (purchase.status === "approved") {
-          return { success: false, error: "This request is already approved." };
+        if (user.credits < 20) {
+          return { success: false, error: `INSUFFICIENT CREDITS: You have ${user.credits} credits. The All-Access Pass requires 20 credits.` };
         }
 
-        const user = local.users[purchase.userId];
-        if (!user) {
-          return { success: false, error: "Associated user profile was not found." };
-        }
-
-        const tier = await getTierInfo(purchase.pack);
-        const creditsToAdd = tier.credits;
-        const nextCredits = user.credits + creditsToAdd;
-
-        user.credits = nextCredits;
-        purchase.status = "approved";
-        purchase.approvedAt = new Date().toISOString();
-
-        local.users[purchase.userId] = user;
-        local.purchaseRequests[requestId] = purchase;
+        user.credits -= 20;
+        user.hasAllAccessPass = true;
+        user.updatedAt = new Date().toISOString();
 
         const txId = "tx_" + Math.random().toString(36).substring(2, 11);
         const newTransaction: CreditTransaction = {
           id: txId,
-          userId: purchase.userId,
-          amount: creditsToAdd,
-          type: "purchase_grant",
-          description: `Recharge Pack: Granted ${creditsToAdd} credits via UPI (UTR: ${purchase.utrNumber})`,
+          userId,
+          amount: -20,
+          type: "all_access_pass_unlock",
+          description: "Unlocked All-Access Pass (2024-2026 JEE Main Shifts Vault)",
           createdAt: new Date().toISOString(),
         };
 
-        if (!local.transactions[purchase.userId]) {
-          local.transactions[purchase.userId] = [];
+        if (!local.transactions[userId]) {
+          local.transactions[userId] = [];
         }
-        local.transactions[purchase.userId].push(newTransaction);
+        local.transactions[userId].push(newTransaction);
+
+        const purchaseId = "req_" + Math.random().toString(36).substring(2, 11);
+        const newRequest: PurchaseRequest = {
+          id: purchaseId,
+          userId,
+          userEmail: user.email,
+          pack: "all_access_pass",
+          amount: 0,
+          utrNumber: `CREDITS:20_BURNT_${txId}`,
+          status: "approved",
+          purchaseDate: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString(),
+          approvedAt: new Date().toISOString(),
+        };
+        local.purchaseRequests[purchaseId] = newRequest;
+
+        local.users[userId] = user;
         saveLocalDb(local);
 
-        const { passwordHash: _, ...userWithoutPassword } = user;
+        const { passwordHash: _, salt: __, ...userWithoutPassword } = user;
         return { success: true, user: userWithoutPassword };
       } catch (err: any) {
         return { success: false, error: err.message };
@@ -1294,84 +1265,105 @@ export const dbService = {
     }
 
     try {
-      const reqRef = db.collection("purchaseRequests").doc(requestId);
-      const result = await db.runTransaction(async (transaction) => {
-        const reqDoc = await transaction.get(reqRef);
-        if (!reqDoc.exists) {
-          throw new Error("Purchase request not found.");
-        }
-
-        const purchase = reqDoc.data() as PurchaseRequest;
-        if (purchase.status === "approved") {
-          throw new Error("This request is already approved.");
-        }
-
-        const userRef = db.collection("users").doc(purchase.userId);
+      const userRef = db.collection("users").doc(userId);
+      const result = await db.runTransaction(async (transaction: any) => {
         const userDoc = await transaction.get(userRef);
         if (!userDoc.exists) {
-          throw new Error("Associated user profile was not found.");
+          throw new Error("User account not found.");
         }
 
         const user = userDoc.data() as UserAccount;
-        const tier = await getTierInfo(purchase.pack);
-        const creditsToAdd = tier.credits;
-        const nextCredits = user.credits + creditsToAdd;
+        if (user.hasAllAccessPass) {
+          return { success: true, user };
+        }
 
-        transaction.update(reqRef, {
-          status: "approved",
-          approvedAt: new Date().toISOString()
-        });
-        transaction.update(userRef, { credits: nextCredits });
+        if (user.credits < 20) {
+          throw new Error(`INSUFFICIENT CREDITS: You have ${user.credits} credits. The All-Access Pass requires 20 credits.`);
+        }
+
+        const nextCredits = user.credits - 20;
+        const updates: any = {
+          credits: nextCredits,
+          hasAllAccessPass: true,
+          updatedAt: new Date().toISOString(),
+        };
+
+        transaction.update(userRef, updates);
 
         const txId = "tx_" + Math.random().toString(36).substring(2, 11);
         const txRef = userRef.collection("transactions").doc(txId);
         const newTransaction: CreditTransaction = {
           id: txId,
-          userId: purchase.userId,
-          amount: creditsToAdd,
-          type: "purchase_grant",
-          description: `Recharge Pack: Granted ${creditsToAdd} credits via UPI (UTR: ${purchase.utrNumber})`,
+          userId,
+          amount: -20,
+          type: "all_access_pass_unlock",
+          description: "Unlocked All-Access Pass (2024-2026 JEE Main Shifts Vault)",
           createdAt: new Date().toISOString(),
         };
-
         transaction.set(txRef, newTransaction);
-        
-        const { passwordHash: _, ...userWithoutPassword } = { ...user, credits: nextCredits } as any;
-        return { success: true, user: userWithoutPassword };
+
+        const purchaseId = "req_" + Math.random().toString(36).substring(2, 11);
+        const purchaseRef = db.collection("purchases").doc(purchaseId);
+        const newRequest: PurchaseRequest = {
+          id: purchaseId,
+          userId,
+          userEmail: user.email,
+          pack: "all_access_pass",
+          amount: 0,
+          utrNumber: `CREDITS:20_BURNT_${txId}`,
+          status: "approved",
+          purchaseDate: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString(),
+          approvedAt: new Date().toISOString(),
+        };
+        transaction.set(purchaseRef, newRequest);
+
+        const updatedUser: UserAccount = {
+          ...user,
+          credits: nextCredits,
+          hasAllAccessPass: true,
+        };
+        return { success: true, user: updatedUser };
       });
 
-      return result;
-    } catch (err: any) {
-      console.error(`Firestore approvePurchase(${requestId}) failure:`, err);
-      return { success: false, error: err.message };
-    }
-  },
+      // Also sync to local database fallback to keep files in sync
+      try {
+        const local = loadLocalDb();
+        if (local.users[userId]) {
+          local.users[userId].credits = result.user.credits;
+          local.users[userId].hasAllAccessPass = true;
+          local.users[userId].updatedAt = new Date().toISOString();
+          saveLocalDb(local);
+        }
+      } catch {}
 
-  async approvePurchaseByUtr(utrNumber: string): Promise<{ success: boolean; user?: UserAccount; error?: string }> {
-    if (useFallbackMode) {
-      const local = loadLocalDb();
-      const reqId = Object.keys(local.purchaseRequests).find(id => local.purchaseRequests[id].utrNumber === utrNumber);
-      if (!reqId) {
-        return { success: false, error: "Purchase request with this UTR was not found in the local database." };
-      }
-      return this.approvePurchase(reqId);
-    }
-    
-    try {
-      const querySnapshot = await db.collection("purchaseRequests")
-        .where("utrNumber", "==", utrNumber)
-        .limit(1)
-        .get();
-        
-      if (querySnapshot.empty) {
-        return { success: false, error: "No purchase request found with this UTR." };
-      }
-      
-      const reqDoc = querySnapshot.docs[0];
-      return this.approvePurchase(reqDoc.id);
+      const { passwordHash: _, salt: __, ...userWithoutPassword } = (result.user as any);
+      return { success: true, user: userWithoutPassword };
     } catch (err: any) {
-      console.error(`Firestore approvePurchaseByUtr(${utrNumber}) failure:`, err);
-      return { success: false, error: err.message };
+      console.warn(`Firestore purchaseAllAccessPass(${userId}) error, attempting local database fallback:`, err.message);
+      try {
+        const local = loadLocalDb();
+        const user = local.users[userId];
+        if (!user) {
+          return { success: false, error: "User account not found." };
+        }
+        if (user.hasAllAccessPass) {
+          const { passwordHash: _, salt: __, ...userWithoutPassword } = user;
+          return { success: true, user: userWithoutPassword };
+        }
+        if (user.credits < 20) {
+          return { success: false, error: `INSUFFICIENT CREDITS: You have ${user.credits} credits. The All-Access Pass requires 20 credits.` };
+        }
+        user.credits -= 20;
+        user.hasAllAccessPass = true;
+        user.updatedAt = new Date().toISOString();
+        local.users[userId] = user;
+        saveLocalDb(local);
+        const { passwordHash: _, salt: __, ...userWithoutPassword } = user;
+        return { success: true, user: userWithoutPassword };
+      } catch (fallbackErr: any) {
+        return { success: false, error: err.message || fallbackErr.message };
+      }
     }
   },
 
@@ -1382,6 +1374,13 @@ export const dbService = {
         const user = local.users[userId];
         if (!user) {
           return { success: false, error: "User account not found." };
+        }
+
+        const isDuplicate = Object.values(local.purchaseRequests).some(
+          p => p.utrNumber === `RZP:${razorpayPaymentId}`
+        );
+        if (isDuplicate) {
+          return { success: false, error: "This payment transaction has already been credited." };
         }
 
         const tier = await getTierInfo(pack);
@@ -1406,16 +1405,23 @@ export const dbService = {
           approvedAt: now.toISOString(),
         };
 
+        const isPass = pack === "all_access_pass";
         const nextCredits = user.credits + creditsToAdd;
         user.credits = nextCredits;
+        if (isPass) {
+          user.hasAllAccessPass = true;
+          user.updatedAt = new Date().toISOString();
+        }
 
         const txId = "tx_" + Math.random().toString(36).substring(2, 11);
         const newTransaction: CreditTransaction = {
           id: txId,
           userId: userId,
-          amount: creditsToAdd,
-          type: "purchase_grant",
-          description: `Razorpay Instant: Mapped ${creditsToAdd} credits (Order: ${razorpayOrderId}, PayID: ${razorpayPaymentId})`,
+          amount: isPass ? 0 : creditsToAdd,
+          type: isPass ? "all_access_pass_unlock" : "purchase_grant",
+          description: isPass
+            ? `Unlocked All-Access Pass via Razorpay (Order: ${razorpayOrderId}, PayID: ${razorpayPaymentId})`
+            : `Razorpay Instant: Mapped ${creditsToAdd} credits (Order: ${razorpayOrderId}, PayID: ${razorpayPaymentId})`,
           createdAt: now.toISOString(),
         };
 
@@ -1435,15 +1441,24 @@ export const dbService = {
     }
 
     try {
+      const duplicateQuery = await db.collection("purchaseRequests")
+        .where("utrNumber", "==", `RZP:${razorpayPaymentId}`)
+        .limit(1)
+        .get();
+      if (!duplicateQuery.empty) {
+        return { success: false, error: "This payment transaction has already been credited." };
+      }
+
       const userRef = db.collection("users").doc(userId);
       const purchaseId = "req_" + Math.random().toString(36).substring(2, 11);
+      const isPass = pack === "all_access_pass";
       const tier = await getTierInfo(pack);
       const price = tier.price;
       const creditsToAdd = tier.credits;
 
       const now = new Date();
       const expiresAt = new Date();
-      expiresAt.setDate(now.getDate() + 30);
+      expiresAt.setDate(now.getDate() + (isPass ? 365 : 30));
 
       const result = await db.runTransaction(async (transaction) => {
         const userDoc = await transaction.get(userRef);
@@ -1471,58 +1486,109 @@ export const dbService = {
         const newTransaction: CreditTransaction = {
           id: txId,
           userId: userId,
-          amount: creditsToAdd,
-          type: "purchase_grant",
-          description: `Razorpay Instant: Mapped ${creditsToAdd} credits (Order: ${razorpayOrderId}, PayID: ${razorpayPaymentId})`,
+          amount: isPass ? 0 : creditsToAdd,
+          type: isPass ? "all_access_pass_unlock" : "purchase_grant",
+          description: isPass
+            ? `Unlocked All-Access Pass via Razorpay (Order: ${razorpayOrderId}, PayID: ${razorpayPaymentId})`
+            : `Razorpay Instant: Mapped ${creditsToAdd} credits (Order: ${razorpayOrderId}, PayID: ${razorpayPaymentId})`,
           createdAt: now.toISOString(),
         };
 
-        transaction.update(userRef, { credits: nextCredits });
+        const userUpdates: any = { credits: nextCredits };
+        if (isPass) {
+          userUpdates.hasAllAccessPass = true;
+          userUpdates.updatedAt = new Date().toISOString();
+        }
+
+        transaction.update(userRef, userUpdates);
         transaction.set(db.collection("purchaseRequests").doc(purchaseId), newRequest);
         transaction.set(userRef.collection("transactions").doc(txId), newTransaction);
 
-        const { passwordHash: _, ...userWithoutPassword } = { ...user, credits: nextCredits } as any;
+        const updatedAccount = {
+          ...user,
+          credits: nextCredits,
+          ...(isPass ? { hasAllAccessPass: true } : {})
+        };
+        const { passwordHash: _, ...userWithoutPassword } = updatedAccount as any;
         return { success: true, user: userWithoutPassword };
       });
 
       return result;
     } catch (err: any) {
-      console.error(`Firestore createRazorpayVerifiedPurchase(${userId}) failure:`, err);
-      return { success: false, error: err.message };
-    }
-  },
-
-  async declinePurchase(requestId: string): Promise<{ success: boolean; error?: string }> {
-    if (useFallbackMode) {
+      console.warn(`Firestore createRazorpayVerifiedPurchase(${userId}) failure, falling back to local database:`, err.message);
       try {
         const local = loadLocalDb();
-        const purchase = local.purchaseRequests[requestId];
-        if (!purchase) {
-          return { success: false, error: "Purchase request not found." };
+        const user = local.users[userId];
+        if (!user) {
+          return { success: false, error: "User account not found." };
         }
-        purchase.status = "declined";
-        local.purchaseRequests[requestId] = purchase;
+
+        const isDuplicate = Object.values(local.purchaseRequests).some(
+          p => p.utrNumber === `RZP:${razorpayPaymentId}`
+        );
+        if (isDuplicate) {
+          return { success: false, error: "This payment transaction has already been credited." };
+        }
+
+        const isPass = pack === "all_access_pass";
+        const tier = await getTierInfo(pack);
+        const price = tier.price;
+        const creditsToAdd = tier.credits;
+        const purchaseId = "req_" + Math.random().toString(36).substring(2, 11);
+
+        const now = new Date();
+        const expiresAt = new Date();
+        expiresAt.setDate(now.getDate() + (isPass ? 365 : 30));
+
+        const newRequest: PurchaseRequest = {
+          id: purchaseId,
+          userId: userId,
+          userEmail: user.email,
+          pack,
+          amount: price,
+          utrNumber: `RZP:${razorpayPaymentId}`,
+          status: "approved",
+          purchaseDate: now.toISOString(),
+          expiresAt: expiresAt.toISOString(),
+          approvedAt: now.toISOString(),
+        };
+
+        const nextCredits = user.credits + creditsToAdd;
+        user.credits = nextCredits;
+        if (isPass) {
+          user.hasAllAccessPass = true;
+          user.updatedAt = new Date().toISOString();
+        }
+
+        const txId = "tx_" + Math.random().toString(36).substring(2, 11);
+        const newTransaction: CreditTransaction = {
+          id: txId,
+          userId: userId,
+          amount: isPass ? 0 : creditsToAdd,
+          type: isPass ? "all_access_pass_unlock" : "purchase_grant",
+          description: isPass
+            ? `Unlocked All-Access Pass via Razorpay (Order: ${razorpayOrderId}, PayID: ${razorpayPaymentId})`
+            : `Razorpay Instant: Mapped ${creditsToAdd} credits (Order: ${razorpayOrderId}, PayID: ${razorpayPaymentId})`,
+          createdAt: now.toISOString(),
+        };
+
+        local.purchaseRequests[purchaseId] = newRequest;
+        local.users[userId] = user;
+        if (!local.transactions[userId]) {
+          local.transactions[userId] = [];
+        }
+        local.transactions[userId].push(newTransaction);
+
         saveLocalDb(local);
-        return { success: true };
-      } catch (err: any) {
-        return { success: false, error: err.message };
+        const { passwordHash: _, ...userWithoutPassword } = user;
+        return { success: true, user: userWithoutPassword };
+      } catch (fallbackErr: any) {
+        return { success: false, error: err.message || fallbackErr.message };
       }
-    }
-
-    try {
-      const reqRef = db.collection("purchaseRequests").doc(requestId);
-      const snap = await reqRef.get();
-      if (!snap.exists) {
-        return { success: false, error: "Purchase request not found." };
-      }
-
-      await reqRef.update({ status: "declined" });
-      return { success: true };
-    } catch (err: any) {
-      console.error(`Firestore declinePurchase(${requestId}) failure:`, err);
-      return { success: false, error: err.message };
     }
   },
+
+
 
   async getUserTransactions(userId: string): Promise<CreditTransaction[]> {
     if (useFallbackMode) {

@@ -12,6 +12,7 @@ interface WalletAndAuthProps {
   onLogout: () => void;
   onClose?: () => void;
   initialTab?: "auth" | "wallet" | "transactions" | "mailbox";
+  initialPackId?: string;
 }
 
 export function WalletAndAuth({
@@ -19,7 +20,8 @@ export function WalletAndAuth({
   onLogin,
   onLogout,
   onClose,
-  initialTab
+  initialTab,
+  initialPackId
 }: WalletAndAuthProps) {
   const [activeTab, setActiveTab] = useState<"auth" | "wallet" | "transactions" | "mailbox">(
     userAccount ? (initialTab || "wallet") : "auth"
@@ -47,10 +49,23 @@ export function WalletAndAuth({
       if (res.ok) {
         const data = await res.json();
         setWalletStats(data);
-        if (data.credits !== undefined && data.credits !== userAccount.credits) {
-          const updated = { ...userAccount, credits: data.credits };
-          localStorage.setItem("jee_user_account", JSON.stringify(updated));
-          onLogin(updated);
+        if (data.credits !== undefined) {
+          const creditsChanged = data.credits !== userAccount.credits;
+          const passChanged = data.hasAllAccessPass !== undefined && data.hasAllAccessPass !== Boolean(userAccount.hasAllAccessPass);
+          if (creditsChanged || passChanged) {
+            const updated: UserAccount = {
+              ...userAccount,
+              credits: data.credits,
+              hasAllAccessPass: data.hasAllAccessPass ?? userAccount.hasAllAccessPass
+            };
+            try {
+              localStorage.setItem("jee_user_account", JSON.stringify(updated));
+              if (updated.hasAllAccessPass || updated.role === "admin") {
+                localStorage.setItem("jee_all_access_pass", "true");
+              }
+            } catch {}
+            onLogin(updated);
+          }
         }
       }
     } catch (err) {
@@ -197,6 +212,7 @@ export function WalletAndAuth({
               userAccount={userAccount}
               currentCredits={walletStats?.credits ?? userAccount.credits}
               pricingTiers={pricingTiers}
+              initialPackId={initialPackId}
               onRechargeSuccess={(updatedUser) => {
                 onLogin(updatedUser);
                 fetchWalletInfo();

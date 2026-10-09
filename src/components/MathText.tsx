@@ -56,16 +56,44 @@ interface MarkdownMathProps {
   className?: string;
 }
 
+function cleanPuaCharacters(str: string): string {
+  return str.replace(/[\uf000-\uf0ff]/g, (ch) => {
+    const code = ch.charCodeAt(0);
+    switch (code) {
+      case 0xf028: return "(";
+      case 0xf029: return ")";
+      case 0xf02b: return "+";
+      case 0xf02d: return "-";
+      case 0xf03d: return "=";
+      case 0xf05b:
+      case 0xf0e9:
+      case 0xf0eb: return "[";
+      case 0xf05d:
+      case 0xf0f9:
+      case 0xf0fb: return "]";
+      case 0xf0b0: return "°";
+      case 0xf0b4: return "×";
+      case 0xf0ae: return "→";
+      default: return "";
+    }
+  });
+}
+
 export function MarkdownMath({ text, className = "" }: MarkdownMathProps) {
   if (!text) return null;
 
-  // Automatically wrap raw LaTeX equations in inline math delimiters if they lack them
-  let processedText = text;
+  // 1. Unescape literal newlines and sanitize MathType PUA font symbols
+  let processedText = cleanPuaCharacters(text.replace(/\\n/g, "\n"));
+
+  // 2. Only auto-wrap standalone naked LaTeX formulas if the string is NOT English prose
   if (!processedText.includes("$")) {
-    const hasBackslash = processedText.includes("\\");
-    const hasSubOrSuper = processedText.includes("^") || processedText.includes("_") || (processedText.includes("{") && processedText.includes("}"));
-    if (hasBackslash || hasSubOrSuper) {
-      processedText = `$${processedText}$`;
+    const isPureShortFormula =
+      !processedText.includes("\n") &&
+      !/\b(the|is|are|of|in|to|and|for|with|that|this|from|which|statement|given|below|calculate|find|choose|correct|incorrect|among|following|let|if|then|when|where|what)\b/i.test(processedText) &&
+      (/^\\[a-zA-Z]+/.test(processedText.trim()) || (/^[-+0-9a-zA-Z\s\(\)\,\.\/]*[\^\\_][-0-9a-zA-Z\s\(\)\,\.\/\{\}\\]*$/.test(processedText.trim()) && !processedText.includes("___")));
+
+    if (isPureShortFormula) {
+      processedText = `$${processedText.trim()}$`;
     }
   }
 

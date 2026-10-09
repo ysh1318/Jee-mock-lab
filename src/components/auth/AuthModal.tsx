@@ -89,6 +89,9 @@ export function AuthModal({ onSuccess, onClose }: AuthModalProps) {
 
       setSuccessMessage(successMsg);
       localStorage.setItem("jee_user_account", JSON.stringify(data.user));
+      if (data.user?.hasAllAccessPass || data.user?.role === "admin") {
+        localStorage.setItem("jee_all_access_pass", "true");
+      }
 
       setTimeout(() => {
         onSuccess(data.user);
@@ -132,6 +135,9 @@ export function AuthModal({ onSuccess, onClose }: AuthModalProps) {
 
       setSuccessMessage(`Welcome, ${data.user.name || "Student"}!`);
       localStorage.setItem("jee_user_account", JSON.stringify(data.user));
+      if (data.user?.hasAllAccessPass || data.user?.role === "admin") {
+        localStorage.setItem("jee_all_access_pass", "true");
+      }
 
       setTimeout(() => {
         onSuccess(data.user);
