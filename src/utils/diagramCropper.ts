@@ -21,8 +21,15 @@ export async function cropDiagramsFromPdf(
     return questions;
   }
 
-  // Check if PDF.js is loaded in the browser
-  const pdfjsLib = (window as any).pdfjsLib;
+  // Check if PDF.js is loaded in the browser, with graceful polling if still initializing
+  let pdfjsLib = (window as any).pdfjsLib;
+  if (!pdfjsLib) {
+    for (let i = 0; i < 20; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      pdfjsLib = (window as any).pdfjsLib;
+      if (pdfjsLib) break;
+    }
+  }
   if (!pdfjsLib) {
     console.warn("[Diagram Engine] pdfjsLib not yet initialized in window, skipping diagram crop.");
     return questions;
@@ -75,8 +82,8 @@ export async function cropDiagramsFromPdf(
     // Enrich questions with cropped diagrams
     const enrichedQuestions = await Promise.all(
       questions.map(async (q) => {
-        // If question doesn't have a diagram or box, keep as-is
-        if (!q.hasDiagram || !Array.isArray(q.diagramBox) || q.diagramBox.length !== 4) {
+        // If question already has diagram or doesn't have a diagram/box, keep as-is
+        if (q.diagramImage || !q.hasDiagram || !Array.isArray(q.diagramBox) || q.diagramBox.length !== 4) {
           return q;
         }
 
