@@ -109,14 +109,11 @@ export async function cropDiagramsFromPdf(
           let pixelW = ((clampedXmax - clampedXmin) / 1000) * width;
           let pixelH = ((clampedYmax - clampedYmin) / 1000) * height;
 
-          // Add a gentle 3% safety margin padding so boundary labels aren't cut
-          const padX = pixelW * 0.03;
-          const padY = pixelH * 0.03;
-
-          pixelX = Math.max(0, Math.min(width - 30, pixelX - padX));
-          pixelY = Math.max(0, Math.min(height - 30, pixelY - padY));
-          pixelW = Math.max(30, Math.min(width - pixelX, pixelW + (padX * 2)));
-          pixelH = Math.max(30, Math.min(height - pixelY, pixelH + (padY * 2)));
+          // Align to crisp integer pixels without upward padding that bleeds into previous text
+          pixelX = Math.max(0, Math.min(width - 30, Math.floor(pixelX)));
+          pixelY = Math.max(0, Math.min(height - 30, Math.floor(pixelY)));
+          pixelW = Math.max(30, Math.min(width - pixelX, Math.ceil(pixelW)));
+          pixelH = Math.max(30, Math.min(height - pixelY, Math.ceil(pixelH)));
 
           // Ensure minimum crop size (must be at least 30x30 pixels)
           if (pixelW < 30 || pixelH < 30) {
