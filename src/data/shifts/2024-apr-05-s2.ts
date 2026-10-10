@@ -79,9 +79,7 @@ export const QUESTIONS_2024_APR_05_S2: Question[] = [
     topic: "Current Electricity",
     difficulty: "Moderate",
     explanation: "Maximum current for galvanometer is $I_g = \\frac{V}{R_g + R_{ser}} = \\frac{10}{100 + 400} = \\frac{10}{500} = 0.02\\text{ A}$. Shunt resistance for ammeter $S = \\frac{I_g R_g}{I - I_g} = \\frac{0.02 \\times 100}{10 - 0.02} = \\frac{2}{9.98} \\approx \\frac{200}{998}\\,\\Omega$. Using the given form $\\frac{x}{10}$, we get $x \\approx 20$.",
-    hasDiagram: true,
-    diagramImage: "/diagrams/2024-apr-05-s2/physics_q_4.png",
-  },
+    },
   {
     id: "2024-P-05",
     subject: Subject.PHYSICS,

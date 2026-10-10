@@ -718,9 +718,7 @@ export const QUESTIONS_2024_JAN_29_S2: Question[] = [
     topic: "Salt Analysis",
     difficulty: "Easy",
     explanation: "Nessler's reagent (alkaline solution of potassium tetraiodomercurate(II)) reacts with ammonia gas ($\\text{NH}_3$) to produce a brown precipitate of iodine of Millon's base.",
-    hasDiagram: true,
-    diagramImage: "/diagrams/2024-jan-29-s2/chemistry_q_15.png",
-  },
+    },
   {
     id: "2024-C-16",
     subject: Subject.CHEMISTRY,
