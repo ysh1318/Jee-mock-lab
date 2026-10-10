@@ -63,6 +63,8 @@ const thoughtsBySubject: Record<string, string[]> = {
  */
 async function fetchWithTimeoutAndRetry(url: string, options: any, maxRetries = 1, timeoutMs = 90000): Promise<Response> {
   let lastError: any = null;
+  let targetUrl = url;
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
     let timeoutId: any = null;
@@ -76,6 +78,10 @@ async function fetchWithTimeoutAndRetry(url: string, options: any, maxRetries = 
     try {
       if (attempt > 0) {
         console.log(`[Auto-Retry] Retrying track parsing fetch... Attempt #${attempt + 1}/${maxRetries + 1}`);
+        // If relative URL failed on previous attempt in production, failover directly to worker edge
+        if (url.startsWith("/api/") && typeof window !== "undefined" && !window.location.hostname.includes("localhost")) {
+          targetUrl = `https://jeemocklab-backend.yashawachar101.workers.dev${url}`;
+        }
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
 
@@ -83,12 +89,20 @@ async function fetchWithTimeoutAndRetry(url: string, options: any, maxRetries = 
         controller.abort();
       }, timeoutMs);
 
-      const response = await fetch(url, {
+      const response = await fetch(targetUrl, {
         ...options,
         signal,
       });
 
       clearTimeout(timeoutId);
+
+      // If Cloudflare Pages proxy returned 502/503, immediately failover to worker edge directly
+      if ((response.status === 502 || response.status === 503) && attempt < maxRetries && url.startsWith("/api/")) {
+        console.warn(`[Auto-Failover] Gateway returned ${response.status}. Direct edge failover to Cloudflare Worker...`);
+        targetUrl = `https://jeemocklab-backend.yashawachar101.workers.dev${url}`;
+        continue;
+      }
+
       return response;
     } catch (err: any) {
       if (timeoutId) clearTimeout(timeoutId);
@@ -327,7 +341,8 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
     provider: string,
     customApiKey: string,
     userId: string,
-    parseSessionId?: string
+    parseSessionId?: string,
+    forceSkipCredit?: boolean
   ): Promise<any[]> => {
     const isFullSubj = partIndex === -1;
     const targetDisplay = isFullSubj ? "Questions 1-25 (Complete Subject)" : (PARTS_CONFIG_DISPLAY[partIndex] || `Part ${partIndex + 1}`);
@@ -349,7 +364,7 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
     });
 
     try {
-      const skipCreditDeduction = partIndex > 0;
+      const skipCreditDeduction = Boolean(forceSkipCredit || partIndex > 0);
       const isBase64 = base64OrFileId.startsWith("data:") || base64OrFileId.length > 500;
 
       const response = await fetchWithTimeoutAndRetry("/api/parse-pdf", {
@@ -384,7 +399,7 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
       }
 
       const parsedData = await response.json();
-      if (parsedData.creditsLeft !== undefined) {
+      if (typeof parsedData.creditsLeft === "number") {
         onCreditsUpdated(parsedData.creditsLeft);
       }
 
@@ -477,7 +492,8 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
         activeAiProviderRef.current,
         userCustomKeyRef.current,
         userAccountRef.current?.id || "",
-        parseSessionIdRef.current
+        parseSessionIdRef.current,
+        true // Guaranteed: Retrying a part within an active session never deducts extra credit
       );
 
       // Now, adjust aggregate stats
@@ -530,9 +546,15 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
       return;
     }
 
-    if (userAccount.credits < 1) {
+    const isUserAdmin = userAccount.role === "admin";
+    if (!isUserAdmin && userAccount.credits < 1) {
       setErrorMsg("INSUFFICIENT CREDITS: Your parsing balance is empty (0 remaining). Please recharge your wallet with 2 credits (₹29), 5 credits (₹59), or 10 credits (₹99) to continue parsing mock exams!");
       return;
+    }
+
+    // Optimistically deduct 1 credit immediately in the candidate interface so they see instant burn
+    if (!isUserAdmin && userAccount.credits > 0) {
+      onCreditsUpdated(userAccount.credits - 1);
     }
 
     const activeAiProvider = activeInstructionTab; // align with instructions tab selection
@@ -750,6 +772,7 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
 
         try {
           // Attempt Fast Single-Pass Extraction (All 25 Questions at once)
+          // sIdx > 0 ensures Chemistry (1) and Maths (2) skip deduction, Physics (0) initiates session burn
           const validated = await parseSpecificPart(
             subj.name as any,
             subj.prefix,
@@ -759,7 +782,8 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
             activeAiProvider,
             userCustomKey,
             userAccount.id,
-            parseSessionIdRef.current
+            parseSessionIdRef.current,
+            sIdx > 0
           );
 
           stopThoughtGenerator(subj.name);
@@ -788,8 +812,8 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
           ]);
 
           try {
-            const p1 = await parseSpecificPart(subj.name as any, subj.prefix, 0, parsedBase64Ref.current, parsedFilenameRef.current, activeAiProvider, userCustomKey, userAccount.id, parseSessionIdRef.current);
-            const p2 = await parseSpecificPart(subj.name as any, subj.prefix, 1, parsedBase64Ref.current, parsedFilenameRef.current, activeAiProvider, userCustomKey, userAccount.id, parseSessionIdRef.current);
+            const p1 = await parseSpecificPart(subj.name as any, subj.prefix, 0, parsedBase64Ref.current, parsedFilenameRef.current, activeAiProvider, userCustomKey, userAccount.id, parseSessionIdRef.current, sIdx > 0);
+            const p2 = await parseSpecificPart(subj.name as any, subj.prefix, 1, parsedBase64Ref.current, parsedFilenameRef.current, activeAiProvider, userCustomKey, userAccount.id, parseSessionIdRef.current, true);
             const chunkQuestions = [...p1, ...p2];
 
             stopThoughtGenerator(subj.name);
@@ -877,6 +901,16 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
       onTestLoaded(testTitle || file.name, allQuestions);
     } catch (error: any) {
       console.error(error);
+      if (userAccount?.id) {
+        fetch(`/api/user/${userAccount.id}/wallet`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => {
+            if (d && typeof d.credits === "number") {
+              onCreditsUpdated(d.credits);
+            }
+          })
+          .catch(() => {});
+      }
       setErrorMsg(error.message || "An unexpected error occurred during document translation.");
     } finally {
       Object.keys(thoughtTimers).forEach((key) => {
@@ -916,7 +950,7 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
   };
 
   const triggerFileSelect = () => {
-    if (userAccount && userAccount.credits < 1) {
+    if (userAccount && userAccount.role !== "admin" && userAccount.credits < 1) {
       setErrorMsg("INSUFFICIENT CREDITS: Your parsing balance is empty (0 remaining). Please recharge your wallet with 2 credits (₹29), 5 credits (₹59), or 10 credits (₹99) to continue parsing mock exams!");
       return;
     }
@@ -1593,8 +1627,8 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
               </span>
               <span className="text-[11px] text-slate-500 font-medium">
                 {apiKeys.gemini || apiKeys.groq 
-                  ? "Dedicated private key active (12-track parallel extraction)"
-                  : "Connect your free Google Gemini or Groq key for unlimited 12-track parallel extraction"}
+                  ? "Dedicated private key active (Personal rate-limit quota)"
+                  : "Connect your free Google Gemini or Groq key for dedicated rate-limit quota"}
               </span>
             </div>
           </div>
@@ -1611,7 +1645,7 @@ export function PdfUploader({ onTestLoaded, userAccount, onRequestLogin, onCredi
                   Why Add Your Own Key?
                 </span>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Get private 15 RPM quota directly from Google AI Studio. Avoid shared server bottlenecks and enable instant 12-track parallel parsing.
+                  Get private 15 RPM quota directly from Google AI Studio. Avoid shared server rate limits and accelerate paper extraction.
                 </p>
               </div>
               <a

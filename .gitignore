@@ -15,4 +15,6 @@ jee mains shifts raw pdfs/
 scratch/
 __pycache__/
 *.pyc
+public/diagrams/ps_*
+public/diagrams/test_session/
 

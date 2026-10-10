@@ -35,6 +35,11 @@ export async function cropDiagramsFromPdf(
     return questions;
   }
 
+  if (!pdfjsLib.GlobalWorkerOptions?.workerSrc) {
+    pdfjsLib.GlobalWorkerOptions = pdfjsLib.GlobalWorkerOptions || {};
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  }
+
   try {
     // Decode base64 to Uint8Array
     const cleanBase64 = pdfBase64.replace(/^data:application\/pdf;base64,/, "").trim();

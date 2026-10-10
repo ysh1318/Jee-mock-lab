@@ -1606,6 +1606,7 @@ Return exactly a JSON object matching the requested schema.`;
   app.post("/api/parse-pdf", async (req, res) => {
     let parseSessionId: any = undefined;
     let skipCreditDeduction: any = undefined;
+    let rollbackCreditIfDeducted: ((reason: string) => Promise<void>) | null = null;
     try {
       let { pdfData, fileId, filename, subject, prefix, provider, apiKey, userId, partIndex } = req.body || {};
       parseSessionId = req.body?.parseSessionId;
@@ -1680,11 +1681,23 @@ Return exactly a JSON object matching the requested schema.`;
         return;
       }
 
-      if (parseSessionId && deductedSessions.has(parseSessionId)) {
-        skipCreditDeduction = true;
+      const isAdmin = user.role === "admin";
+      let alreadyCharged = false;
+      if (parseSessionId) {
+        if (deductedSessions.has(parseSessionId)) {
+          alreadyCharged = true;
+        } else {
+          deductedSessions.add(parseSessionId);
+          setTimeout(() => {
+            deductedSessions.delete(parseSessionId);
+          }, 15 * 60 * 1000);
+        }
+      }
+      if (skipCreditDeduction) {
+        alreadyCharged = true;
       }
 
-      if (user.credits < 1 && !skipCreditDeduction) {
+      if (!isAdmin && user.credits < 1 && !alreadyCharged) {
         res.status(402).json({
           creditsExceeded: true,
           error: "INSUFFICIENT CREDITS: Your parsing balance is empty (0 remaining). Please recharge your wallet with 2 credits (₹29), 5 credits (₹59), or 10 credits (₹99) to continue parsing mock exams!",
@@ -1692,13 +1705,38 @@ Return exactly a JSON object matching the requested schema.`;
         return;
       }
 
-      if (parseSessionId && !skipCreditDeduction) {
-        // Reserve the deduction synchronously so concurrent parallel requests bypass deduction
-        deductedSessions.add(parseSessionId);
-        // Setup TTL self-cleanup after 15 minutes to prevent memory pressure
-        setTimeout(() => {
-          deductedSessions.delete(parseSessionId);
-        }, 15 * 60 * 1000);
+      let creditsLeft = typeof user.credits === "number" ? user.credits : 0;
+      let deductedCreditLocally = false;
+
+      rollbackCreditIfDeducted = async (reason: string) => {
+        if (deductedCreditLocally) {
+          deductedCreditLocally = false;
+          if (parseSessionId) deductedSessions.delete(parseSessionId);
+          try {
+            await dbService.adjustCreditsAdmin(userId, 1, `Auto-Refund: ${reason}`);
+            console.log(`[CREDIT_AUTO_REFUND] 1 credit refunded to ${userId}. Reason: ${reason}`);
+          } catch (refundErr) {
+            console.error("[REFUND_ERROR]", refundErr);
+          }
+        }
+      };
+
+      if (!isAdmin && !alreadyCharged) {
+        const reduction = await dbService.deductCredit(userId, filename || "JEE_Mains_Mock.pdf");
+        if (!reduction.success) {
+          if (parseSessionId) deductedSessions.delete(parseSessionId);
+          res.status(402).json({
+            creditsExceeded: true,
+            error: reduction.error || "INSUFFICIENT CREDITS: Your parsing balance is empty.",
+          });
+          return;
+        }
+        creditsLeft = reduction.creditsLeft;
+        deductedCreditLocally = true;
+      } else if (alreadyCharged) {
+        // If already charged by parallel subject track (Physics/Chemistry), fetch fresh balance so response doesn't return stale credits
+        const freshUser = await dbService.getUser(userId);
+        creditsLeft = freshUser && typeof freshUser.credits === "number" ? freshUser.credits : creditsLeft;
       }
 
       const activeProvider = (provider || "gemini").toLowerCase();
@@ -1720,6 +1758,7 @@ Return exactly a JSON object matching the requested schema.`;
       }
 
       if (!customApiKey || typeof customApiKey !== "string" || customApiKey.trim() === "") {
+        await rollbackCreditIfDeducted("Missing API Key");
         res.status(401).json({
           error: `API KEY REQUIRED: No server-side API key or user key was found for ${activeProvider}. Please save your own key in the API hub above to proceed!`,
         });
@@ -1897,15 +1936,6 @@ RULES:
                 };
               });
 
-              let creditsLeft = user.credits;
-              if (!skipCreditDeduction) {
-                const reduction = await dbService.deductCredit(userId, filename || "JEE_Mains_Mock.pdf");
-                if (!reduction.success) {
-                  res.status(400).json({ error: reduction.error });
-                  return;
-                }
-                creditsLeft = reduction.creditsLeft;
-              }
               res.json({
                 testName: manifest.testName || (filename ? filename.replace(/\.[^/.]+$/, "") : "JEE Mock Paper"),
                 questions,
@@ -2184,7 +2214,9 @@ Your response must only contain real questions extracted directly from the uploa
           parsedData.questions = normalizeQuestions(parsedData.questions, targetSubject, prefix || "P", pageOffset);
 
         } catch (gemError: any) {
-          if (parseSessionId && !skipCreditDeduction) {
+          if (rollbackCreditIfDeducted) {
+            await rollbackCreditIfDeducted("Gemini extraction error");
+          } else if (parseSessionId && !skipCreditDeduction) {
             deductedSessions.delete(parseSessionId);
           }
           console.error("[Gemini Parser Error] Failed to parse PDF:", gemError);
@@ -2194,15 +2226,6 @@ Your response must only contain real questions extracted directly from the uploa
           return;
         }
 
-        let creditsLeft = user.credits;
-        if (!skipCreditDeduction) {
-          const reduction = await dbService.deductCredit(userId, filename || "JEE_Mains_Mock.pdf");
-          if (!reduction.success) {
-            res.status(400).json({ error: reduction.error });
-            return;
-          }
-          creditsLeft = reduction.creditsLeft;
-        }
         parsedData.creditsLeft = creditsLeft;
         res.json(parsedData);
         return;
@@ -2288,7 +2311,9 @@ Return a JSON object conforming MATCHING the following schema exactly. Notice: T
         parsedResult.questions = normalizeQuestions(parsedResult.questions, subject || "Physics", prefix || "P");
 
       } catch (provError: any) {
-        if (parseSessionId && !skipCreditDeduction) {
+        if (rollbackCreditIfDeducted) {
+          await rollbackCreditIfDeducted(`${activeProvider} extraction error`);
+        } else if (parseSessionId && !skipCreditDeduction) {
           deductedSessions.delete(parseSessionId);
         }
         console.error(`[Provider ${activeProvider} Error] Failed to parse PDF:`, provError);
@@ -2298,21 +2323,13 @@ Return a JSON object conforming MATCHING the following schema exactly. Notice: T
         return;
       }
 
-      let creditsLeft = user.credits;
-      if (!skipCreditDeduction) {
-        const reduction = await dbService.deductCredit(userId, filename || "JEE_Mains_Mock.pdf");
-        if (!reduction.success) {
-          res.status(400).json({ error: reduction.error });
-          return;
-        }
-        creditsLeft = reduction.creditsLeft;
-      }
       parsedResult.creditsLeft = creditsLeft;
-
       res.json(parsedResult);
 
     } catch (error: any) {
-      if (parseSessionId && !skipCreditDeduction) {
+      if (rollbackCreditIfDeducted) {
+        await rollbackCreditIfDeducted("Parsing pipeline error");
+      } else if (parseSessionId && !skipCreditDeduction) {
         deductedSessions.delete(parseSessionId);
       }
       console.error("PDF Parsing Error:", error);
